@@ -30,7 +30,7 @@ use RevokeGPT\Firewall\Http\TransportException;
  */
 final class Firewall
 {
-    public const VERSION = '0.1.0';
+    public const VERSION = '0.1.1';
     private const DEFAULT_API_BASE = 'https://api.revokegpt.com';
     private const SITEVERIFY_TIMEOUT = 2.0;
     private const BUNDLE_TIMEOUT = 5.0;

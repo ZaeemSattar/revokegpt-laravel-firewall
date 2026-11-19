@@ -35,7 +35,7 @@ runs before routing and before every other middleware. Config (`php artisan vend
 - Responses that block, challenge or set a cookie carry `Cache-Control: no-store`; `Vary: Cookie`
   is added when a rule can depend on a cookie. A fetch/XHR request never gets a redirect, only
   `403` + `X-RG-Action: challenge`.
-- Siteverify: `POST /v1/siteverify`, Bearer secret, `X-RG-Integration: laravel/0.1.0`, 2 s timeout,
+- Siteverify: `POST /v1/siteverify`, Bearer secret, `X-RG-Integration: laravel/0.1.1`, 2 s timeout,
   one 2 s budget for connect, send and the full body (cURL's total timeout); at most one retry, only when the connection could not be established (`CURLE_COULDNT_CONNECT`, `CURLE_COULDNT_RESOLVE_HOST`, `CURLE_SSL_CONNECT_ERROR`) and only while budget remains (never after a timeout or once the request may have been written); no redirects followed. A circuit
   breaker opens after 5 consecutive failures for 30 s (its counters live in the cache store, so
   it spans requests). Tokens outside 20..4096 characters or outside base64url and `.` are rejected
@@ -110,7 +110,7 @@ life), and the advisories are not ignored. 12.72.0 is the line that installs cle
 
 ## Commands
 
-MIT. Hostname canonicalization, punycode and strict JSON reading are `revokegpt/revokegpt`'s (pinned to the exact version, `0.1.0`: the firewall uses SDK internals, so the two release in lockstep): in the monorepo
+MIT. Hostname canonicalization, punycode and strict JSON reading are `revokegpt/revokegpt`'s (pinned to the exact version, `0.1.1`: the firewall uses SDK internals, so the two release in lockstep): in the monorepo
 `composer.json` has a path repository to `../../php` (the unpublished SDK, symlinked); the mirror export drops it and
 the package comes from Packagist.
 
