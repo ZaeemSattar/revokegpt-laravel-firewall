@@ -1,0 +1,4310 @@
+{
+  "suite": "sdk-http",
+  "protocolVersion": 1,
+  "description": "Server SDK request shape, response handling and error mapping (M11; protocol v1 section 22). A case is { name, call, args, response, expected }. call is verify, createAssessment, annotate, eraseAccount or cardFields. args are wire-neutral camelCase: verify { token, options }, createAssessment { input }, annotate { aid, input? }, eraseAccount { input }, cardFields { bin?, last4? }; timeoutMs (an integer of milliseconds, applied at construction) is optional on any HTTP call. response (null for cardFields) is { status, headers, body | bodyBase64 | bodyRepeat: { chunk, times }, delayMs?, hangup?: \"before-headers\" | \"mid-body\" }: a string body is sent as it is, any other body is JSON-encoded, bodyBase64 is the raw bytes, bodyRepeat is chunk repeated times times, delayMs is how long the server waits before answering, and hangup closes the connection before the headers, or after the first part of the body. expected.request is null when nothing is sent, else { method, path (slug-free, from /v1), contentType, auth, form?, json?, jsonSubset? }: auth bearer means Authorization: Bearer <the fixture secret> and no secret anywhere else, form-secret means a secret form field holding the fixture secret and no Authorization header; the secret is never in the URL. form is the other form fields, compared as a set of fields (no field twice); json is compared as a value, never as bytes; jsonSubset must be contained in the sent JSON. Exactly one of outcome { ok, reason? } (verify), error { code, status, requestId?, retryAfterSeconds?, unavailable? } (an absent requestId or retryAfterSeconds must be absent; unavailable is true exactly for the 503 subclass), inputError true (the language argument error, with no request) or result (a projection: every field named here must equal the field of the parsed answer; null for a call that returns nothing). Every expectation is proven against the Node SDK (sdks/node/test/sdk-http.test.ts). score-invalid cannot come out of verify over HTTP, because the response reader turns an invalid score into not-verified; relying-party.json covers it. Regenerate with `pnpm --filter @revokegpt/protocol vectors:sdk-http`.",
+  "cases": [
+    {
+      "name": "verify: a good token passes",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "verify: remoteip and sitekey are form fields",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5,
+          "remoteip": "::ffff:192.0.2.1",
+          "sitekey": "rgpk_7Hq2LmZ9xK4aRb3Nf8Tw"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123",
+            "remoteip": "::ffff:192.0.2.1",
+            "sitekey": "rgpk_7Hq2LmZ9xK4aRb3Nf8Tw"
+          }
+        },
+        "outcome": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "verify: an empty remoteip and sitekey are not sent",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5,
+          "remoteip": "",
+          "sitekey": ""
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "verify: a token with a form metacharacter cannot add a field",
+      "call": "verify",
+      "args": {
+        "token": "a-b_c",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "a-b_c"
+          }
+        },
+        "outcome": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "verify: an app token passes for the app it was issued to",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedApp": {
+            "platform": "android",
+            "id": "com.example.app"
+          },
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "apk_package_name": "com.example.app",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "verify: reason invalid-expectation (neither hostname nor app)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedAction": "login"
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-expectation"
+        }
+      }
+    },
+    {
+      "name": "verify: reason invalid-expectation (a hostname that is not canonical)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "Shop.example"
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-expectation"
+        }
+      }
+    },
+    {
+      "name": "verify: reason invalid-expectation (both a hostname and an app)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5,
+          "expectedApp": {
+            "platform": "ios",
+            "id": "com.example.app"
+          }
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-expectation"
+        }
+      }
+    },
+    {
+      "name": "verify: reason invalid-options (remoteip is not an address)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5,
+          "remoteip": "not-an-ip"
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-options"
+        }
+      }
+    },
+    {
+      "name": "verify: reason invalid-options (sitekey is not a site key)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5,
+          "sitekey": "rgpk_nope"
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-options"
+        }
+      }
+    },
+    {
+      "name": "verify: invalid-expectation wins over invalid-options and a bad token",
+      "call": "verify",
+      "args": {
+        "token": "bad token",
+        "options": {
+          "expectedAction": "login",
+          "remoteip": "x"
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-expectation"
+        }
+      }
+    },
+    {
+      "name": "verify: invalid-options wins over a bad token",
+      "call": "verify",
+      "args": {
+        "token": "bad token",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5,
+          "remoteip": "x"
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-options"
+        }
+      }
+    },
+    {
+      "name": "verify: reason invalid-token-format (a space)",
+      "call": "verify",
+      "args": {
+        "token": "bad token",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-token-format"
+        }
+      }
+    },
+    {
+      "name": "verify: reason invalid-token-format (empty)",
+      "call": "verify",
+      "args": {
+        "token": "",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-token-format"
+        }
+      }
+    },
+    {
+      "name": "verify: reason invalid-token-format (2049 characters)",
+      "call": "verify",
+      "args": {
+        "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "outcome": {
+          "ok": false,
+          "reason": "invalid-token-format"
+        }
+      }
+    },
+    {
+      "name": "verify: a token of 2048 characters is sent",
+      "call": "verify",
+      "args": {
+        "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "outcome": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "verify: reason not-verified (success false)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": false,
+          "error-codes": [
+            "timeout-or-duplicate"
+          ]
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "not-verified"
+        }
+      }
+    },
+    {
+      "name": "verify: reason not-verified (score out of range)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "score": 7
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "not-verified"
+        }
+      }
+    },
+    {
+      "name": "verify: reason not-verified (a non-JSON 200)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/plain; charset=utf-8"
+        },
+        "body": "<html>502</html>"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "not-verified"
+        }
+      }
+    },
+    {
+      "name": "verify: reason not-verified (an empty 200)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {},
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "not-verified"
+        }
+      }
+    },
+    {
+      "name": "verify: reason not-verified (a byte-order mark before a passing body)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "bodyBase64": "77u/eyJzdWNjZXNzIjp0cnVlLCJob3N0bmFtZSI6InNob3AuZXhhbXBsZSIsImFjdGlvbiI6ImxvZ2luIiwic2NvcmUiOjAuOX0="
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "not-verified"
+        }
+      }
+    },
+    {
+      "name": "verify: reason not-verified (invalid UTF-8)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "bodyBase64": "eyJzdWNjZXNzIjp0cnVlLCJob3N0bmFtZSI6InNob3AuZXhhbXBsZSIsImFjdGlvbiI6Iv/+In0="
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "not-verified"
+        }
+      }
+    },
+    {
+      "name": "verify: reason hostname-mismatch",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "evil.example",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "hostname-mismatch"
+        }
+      }
+    },
+    {
+      "name": "verify: reason app-mismatch",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedApp": {
+            "platform": "android",
+            "id": "com.example.app"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "apk_package_name": "com.example.other"
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "app-mismatch"
+        }
+      }
+    },
+    {
+      "name": "verify: reason action-mismatch",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "signup",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "action-mismatch"
+        }
+      }
+    },
+    {
+      "name": "verify: reason score-missing",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login"
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "score-missing"
+        }
+      }
+    },
+    {
+      "name": "verify: reason threshold-missing",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "threshold-missing"
+        }
+      }
+    },
+    {
+      "name": "verify: reason score-below-threshold",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.3
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "score-below-threshold"
+        }
+      }
+    },
+    {
+      "name": "verify: a score equal to the threshold passes",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.5
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "verify: reason network-error (hang-up before the headers)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "hangup": "before-headers"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "network-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason network-error (hang-up in the middle of the body)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        },
+        "hangup": "mid-body"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "network-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason network-error (a timeout)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        },
+        "timeoutMs": 50
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        },
+        "delayMs": 400
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "network-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (301)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 301,
+        "headers": {
+          "location": "/v1/siteverify"
+        },
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (307 to another host, not followed)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 307,
+        "headers": {
+          "location": "https://evil.example/v1/siteverify"
+        },
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (413)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 413,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "payload-too-large",
+            "message": "m",
+            "requestId": "req-1"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (429 with Retry-After)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "7"
+        },
+        "body": {
+          "error": {
+            "code": "rate-limited",
+            "message": "m",
+            "requestId": "req-1"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (500 with an error body)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "internal-error",
+            "message": "m",
+            "requestId": "req-1"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (500 with no body)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {},
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (503)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 503,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "service-unavailable",
+            "message": "m",
+            "requestId": "req-1"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (a passing body behind a 500)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "hostname": "shop.example",
+          "action": "login",
+          "score": 0.9
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "verify: reason http-error (a 200 body of 64 KiB + 1)",
+      "call": "verify",
+      "args": {
+        "token": "tok_abc-DEF_123",
+        "options": {
+          "expectedHostname": "shop.example",
+          "expectedAction": "login",
+          "minScore": 0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "bodyRepeat": {
+          "chunk": " ",
+          "times": 65537
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/siteverify",
+          "contentType": "application/x-www-form-urlencoded",
+          "auth": "form-secret",
+          "form": {
+            "response": "tok_abc-DEF_123"
+          }
+        },
+        "outcome": {
+          "ok": false,
+          "reason": "http-error"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a token assessment",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "expectedAction": "login"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123",
+              "expectedAction": "login"
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: an express assessment",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "express": true,
+          "userIpAddress": "192.0.2.1",
+          "userAgent": "Mozilla/5.0",
+          "headers": [
+            "accept-language: en"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.5,
+            "reasons": [
+              "LOW_CONFIDENCE_SCORE"
+            ]
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": true
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "express": true,
+              "userIpAddress": "192.0.2.1",
+              "userAgent": "Mozilla/5.0",
+              "headers": [
+                "accept-language: en"
+              ]
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.5
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: userInfo with an account id",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "userInfo": {
+            "accountId": "user-42",
+            "createAccountTime": "2026-11-09T10:00:00.000Z"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123",
+              "userInfo": {
+                "accountId": "user-42",
+                "createAccountTime": "2026-11-09T10:00:00.000Z"
+              }
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: userInfo with a hashed account id",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "userInfo": {
+            "hashedAccountId": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc="
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123",
+              "userInfo": {
+                "hashedAccountId": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc="
+              }
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: userInfo with only a phone number",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "userInfo": {
+            "userIds": [
+              {
+                "phoneNumber": "+15551234567"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123",
+              "userInfo": {
+                "userIds": [
+                  {
+                    "phoneNumber": "+15551234567"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: an empty userInfo is an argument error",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "userInfo": {}
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "createAssessment: accountVerification sits beside event",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "userInfo": {
+            "accountId": "u"
+          },
+          "accountVerification": {
+            "endpoints": [
+              {
+                "emailAddress": "a@b.co"
+              }
+            ],
+            "languageCode": "en"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "requiresMfa": true
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123",
+              "userInfo": {
+                "accountId": "u"
+              }
+            },
+            "accountVerification": {
+              "endpoints": [
+                {
+                  "emailAddress": "a@b.co"
+                }
+              ],
+              "languageCode": "en"
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: accountVerification without an account is an argument error",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "accountVerification": {
+            "endpoints": [
+              {
+                "emailAddress": "a@b.co"
+              }
+            ]
+          }
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "createAssessment: transactionData round trip",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "transactionData": {
+            "transactionId": "order-1001",
+            "paymentMethod": "credit-card",
+            "cardBin": "42424242",
+            "cardLastFour": "4242",
+            "currencyCode": "USD",
+            "value": 59.9,
+            "shippingValue": 4.5,
+            "shippingAddress": {
+              "recipient": "Ada Example",
+              "address": [
+                "1 Example Street"
+              ],
+              "locality": "London",
+              "administrativeArea": "England",
+              "regionCode": "GB",
+              "postalCode": "SW1A 1AA"
+            },
+            "billingAddress": {
+              "regionCode": "GB",
+              "postalCode": "SW1A 1AA"
+            },
+            "user": {
+              "accountId": "user-1",
+              "creationMs": "1760000000000",
+              "email": "ada@example.com",
+              "emailVerified": true,
+              "phoneNumber": "+447700900123",
+              "phoneVerified": false
+            },
+            "merchants": [
+              {
+                "accountId": "seller-1"
+              }
+            ],
+            "items": [
+              {
+                "name": "Widget",
+                "value": 29.95,
+                "quantity": 2,
+                "merchantAccountId": "seller-1"
+              }
+            ],
+            "gatewayInfo": {
+              "name": "adyen",
+              "gatewayResponseCode": "CVC Declined",
+              "avsResponseCode": "Y",
+              "cvvResponseCode": "N"
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123",
+              "transactionData": {
+                "transactionId": "order-1001",
+                "paymentMethod": "credit-card",
+                "cardBin": "42424242",
+                "cardLastFour": "4242",
+                "currencyCode": "USD",
+                "value": 59.9,
+                "shippingValue": 4.5,
+                "shippingAddress": {
+                  "recipient": "Ada Example",
+                  "address": [
+                    "1 Example Street"
+                  ],
+                  "locality": "London",
+                  "administrativeArea": "England",
+                  "regionCode": "GB",
+                  "postalCode": "SW1A 1AA"
+                },
+                "billingAddress": {
+                  "regionCode": "GB",
+                  "postalCode": "SW1A 1AA"
+                },
+                "user": {
+                  "accountId": "user-1",
+                  "creationMs": "1760000000000",
+                  "email": "ada@example.com",
+                  "emailVerified": true,
+                  "phoneNumber": "+447700900123",
+                  "phoneVerified": false
+                },
+                "merchants": [
+                  {
+                    "accountId": "seller-1"
+                  }
+                ],
+                "items": [
+                  {
+                    "name": "Widget",
+                    "value": 29.95,
+                    "quantity": 2,
+                    "merchantAccountId": "seller-1"
+                  }
+                ],
+                "gatewayInfo": {
+                  "name": "adyen",
+                  "gatewayResponseCode": "CVC Declined",
+                  "avsResponseCode": "Y",
+                  "cvvResponseCode": "N"
+                }
+              }
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: transactionData with the card fields of cardFields",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "transactionData": {
+            "cardBin": "424242",
+            "cardLastFour": "4242",
+            "currencyCode": "EUR",
+            "value": 10
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "jsonSubset": {
+            "event": {
+              "transactionData": {
+                "cardBin": "424242",
+                "cardLastFour": "4242",
+                "currencyCode": "EUR",
+                "value": 10
+              }
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a card number in items[].name is refused before any request",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "transactionData": {
+            "items": [
+              {
+                "name": "4242424242424242"
+              }
+            ]
+          }
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a card number in gatewayInfo is refused before any request",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "transactionData": {
+            "gatewayInfo": {
+              "gatewayResponseCode": "4242424242424242"
+            }
+          }
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "createAssessment: an unknown transactionData key is an argument error",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "transactionData": {
+            "cardNumber": "x"
+          }
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "createAssessment: a 7 digit BIN in transactionData is an argument error",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "transactionData": {
+            "cardBin": "4242424"
+          }
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "createAssessment: fraudPrevention DISABLED is sent",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "fraudPrevention": "DISABLED"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123",
+              "fraudPrevention": "DISABLED"
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: fraudPrevention ENABLED is sent",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "fraudPrevention": "ENABLED",
+          "transactionData": {
+            "value": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123",
+              "fraudPrevention": "ENABLED",
+              "transactionData": {
+                "value": 5
+              }
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: both M8 assessments are read",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "transactionData": {
+            "value": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0.1,
+            "riskReasons": [
+              {
+                "reason": "HIGH_TRANSACTION_VALUE"
+              }
+            ],
+            "cardTestingVerdict": {
+              "risk": 0.05
+            },
+            "stolenInstrumentVerdict": {
+              "risk": 0.06
+            },
+            "cardTestingRisk": 0.05,
+            "stolenInstrumentRisk": 0.06
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": 0.2,
+              "reasons": [
+                "VOIP_NUMBER"
+              ]
+            }
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "jsonSubset": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0.1,
+            "stolenInstrumentRisk": 0.06
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": 0.2,
+              "reasons": [
+                "VOIP_NUMBER"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: unscored M8 assessments are read",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123",
+          "transactionData": {
+            "value": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0,
+            "riskReasons": [],
+            "cardTestingVerdict": {
+              "risk": 0
+            },
+            "stolenInstrumentVerdict": {
+              "risk": 0
+            },
+            "cardTestingRisk": 0,
+            "stolenInstrumentRisk": 0,
+            "unscored": true
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": 0,
+              "reasons": [],
+              "unscored": true
+            }
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "jsonSubset": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0,
+            "unscored": true
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": 0,
+              "unscored": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: an M8 assessment with a malformed risk is invalid-response",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 7,
+            "riskReasons": [],
+            "cardTestingVerdict": {
+              "risk": 0
+            },
+            "stolenInstrumentVerdict": {
+              "risk": 0
+            },
+            "cardTestingRisk": 0,
+            "stolenInstrumentRisk": 0
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "jsonSubset": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "invalid-response",
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "createAssessment: unknown response fields are kept",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "future": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "jsonSubset": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "result": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9
+          },
+          "future": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a 200 with a body that is not JSON",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/plain; charset=utf-8"
+        },
+        "body": "ok"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "invalid-response",
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a 200 with an empty body",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {},
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "invalid-response",
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a 200 that does not fit the schema",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "invalid-response",
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a 200 with a JSON array",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": []
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "invalid-response",
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a 200 body of 64 KiB + 1 is invalid-response",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "bodyRepeat": {
+          "chunk": " ",
+          "times": 65537
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "invalid-response",
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a 500 body of 64 KiB + 1 keeps its status as internal-error",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "bodyRepeat": {
+          "chunk": " ",
+          "times": 65537
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "internal-error",
+          "status": 500
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a 301 is not followed",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 301,
+        "headers": {
+          "location": "/v1/assessments"
+        },
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "internal-error",
+          "status": 301
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a 307 to another host is not followed",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 307,
+        "headers": {
+          "location": "https://evil.example/v1/assessments"
+        },
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "internal-error",
+          "status": 307
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 401 unauthorized",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "unauthorized",
+            "message": "m",
+            "requestId": "req-401"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "unauthorized",
+          "status": 401,
+          "requestId": "req-401"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 413 payload-too-large",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 413,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "payload-too-large",
+            "message": "m",
+            "requestId": "req-413"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "payload-too-large",
+          "status": 413,
+          "requestId": "req-413"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 429 with Retry-After 7",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "7"
+        },
+        "body": {
+          "error": {
+            "code": "rate-limited",
+            "message": "m",
+            "requestId": "req-429"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "rate-limited",
+          "status": 429,
+          "requestId": "req-429",
+          "retryAfterSeconds": 7
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 429 with Retry-After soon has no seconds",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "soon"
+        },
+        "body": {
+          "error": {
+            "code": "rate-limited",
+            "message": "m",
+            "requestId": "req-429"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "rate-limited",
+          "status": 429,
+          "requestId": "req-429"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 429 with a Retry-After date has no seconds",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "Wed, 21 Oct 2026 07:28:00 GMT"
+        },
+        "body": {
+          "error": {
+            "code": "rate-limited",
+            "message": "m",
+            "requestId": "req-429"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "rate-limited",
+          "status": 429,
+          "requestId": "req-429"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 429 with a 7 digit Retry-After has no seconds",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "1234567"
+        },
+        "body": {
+          "error": {
+            "code": "rate-limited",
+            "message": "m",
+            "requestId": "req-429"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "rate-limited",
+          "status": 429,
+          "requestId": "req-429"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 429 with a negative Retry-After has no seconds",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "-1"
+        },
+        "body": {
+          "error": {
+            "code": "rate-limited",
+            "message": "m",
+            "requestId": "req-429"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "rate-limited",
+          "status": 429,
+          "requestId": "req-429"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 429 with a 6 digit Retry-After",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "123456"
+        },
+        "body": {
+          "error": {
+            "code": "rate-limited",
+            "message": "m",
+            "requestId": "req-429"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "rate-limited",
+          "status": 429,
+          "requestId": "req-429",
+          "retryAfterSeconds": 123456
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 500 with an error body",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "internal-error",
+            "message": "m",
+            "requestId": "req-500"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "internal-error",
+          "status": 500,
+          "requestId": "req-500"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 500 with no body",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {},
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "internal-error",
+          "status": 500
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 500 with an HTML body",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "content-type": "text/plain; charset=utf-8"
+        },
+        "body": "<html>oops</html>"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "internal-error",
+          "status": 500
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 500 with an error body whose code is not a string",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": 7
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "internal-error",
+          "status": 500
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 403 feature-disabled keeps its code",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "feature-disabled",
+            "message": "m",
+            "requestId": "req-403"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "feature-disabled",
+          "status": 403,
+          "requestId": "req-403"
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 503 is unavailable",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 503,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "30"
+        },
+        "body": {
+          "error": {
+            "code": "service-unavailable",
+            "message": "m",
+            "requestId": "req-503"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "service-unavailable",
+          "status": 503,
+          "requestId": "req-503",
+          "retryAfterSeconds": 30,
+          "unavailable": true
+        }
+      }
+    },
+    {
+      "name": "createAssessment: 503 with no body is unavailable",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 503,
+        "headers": {},
+        "body": ""
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "service-unavailable",
+          "status": 503,
+          "unavailable": true
+        }
+      }
+    },
+    {
+      "name": "createAssessment: hang-up before the headers",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "hangup": "before-headers"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "network-error",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "createAssessment: hang-up in the middle of the body",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        },
+        "hangup": "mid-body"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "network-error",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "createAssessment: a timeout",
+      "call": "createAssessment",
+      "args": {
+        "input": {
+          "token": "tok_abc-DEF_123"
+        },
+        "timeoutMs": 50
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "name": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        },
+        "delayMs": 400
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "event": {
+              "token": "tok_abc-DEF_123"
+            }
+          }
+        },
+        "error": {
+          "code": "network-error",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "annotate: the bare aid",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "annotation": "FRAUDULENT",
+          "reasons": [
+            "CHARGEBACK_FRAUD"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "annotation": "FRAUDULENT",
+            "reasons": [
+              "CHARGEBACK_FRAUD"
+            ]
+          }
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "annotate: assessments/<aid>",
+      "call": "annotate",
+      "args": {
+        "aid": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "annotation": "LEGITIMATE"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "annotation": "LEGITIMATE"
+          }
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "annotate: PAYMENT_FRAUD is sent as given",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "reasons": [
+            "PAYMENT_FRAUD"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "reasons": [
+              "PAYMENT_FRAUD"
+            ]
+          }
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "annotate: transactionEvent alone",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION_DECLINE",
+            "reason": "do_not_honor",
+            "value": 59.9,
+            "eventTime": "2026-11-09T10:00:00Z"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "transactionEvent": {
+              "eventType": "AUTHORIZATION_DECLINE",
+              "reason": "do_not_honor",
+              "value": 59.9,
+              "eventTime": "2026-11-09T10:00:00Z"
+            }
+          }
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "annotate: an account id with a password outcome",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "accountId": "user-42",
+          "reasons": [
+            "CORRECT_PASSWORD"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "accountId": "user-42",
+            "reasons": [
+              "CORRECT_PASSWORD"
+            ]
+          }
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "annotate: a hashed account id",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "hashedAccountId": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
+          "reasons": [
+            "FAILED_TWO_FACTOR"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "hashedAccountId": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
+            "reasons": [
+              "FAILED_TWO_FACTOR"
+            ]
+          }
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "annotate: an empty annotation is sent and the edge refuses it",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "bad-request",
+            "message": "m",
+            "requestId": "req-400"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {}
+        },
+        "error": {
+          "code": "bad-request",
+          "status": 400,
+          "requestId": "req-400"
+        }
+      }
+    },
+    {
+      "name": "annotate: an empty annotation the edge accepts",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {}
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "annotate: a 41 character aid is an argument error",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-c",
+        "input": {}
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "annotate: an aid with a bad character is an argument error",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-c!",
+        "input": {}
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "annotate: an aid with a path separator is an argument error",
+      "call": "annotate",
+      "args": {
+        "aid": "../aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {}
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "annotate: a wrong prefix is an argument error",
+      "call": "annotate",
+      "args": {
+        "aid": "assessment/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {}
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "annotate: both account forms is an argument error",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "accountId": "a",
+          "hashedAccountId": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc="
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "annotate: an unknown reason is an argument error",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "reasons": [
+            "NOPE"
+          ]
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "annotate: an unknown key is an argument error",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "annotation": "FRAUDULENT",
+          "extra": 1
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "annotate: a card number in the transactionEvent reason is refused before any request",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "transactionEvent": {
+            "eventType": "CHARGEBACK",
+            "reason": "4242424242424242"
+          }
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "annotate: a 200 that is not JSON is invalid-response",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/plain; charset=utf-8"
+        },
+        "body": "ok"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {}
+        },
+        "error": {
+          "code": "invalid-response",
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "annotate: 404 not-found",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "annotation": "FRAUDULENT"
+        }
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "not-found",
+            "message": "m",
+            "requestId": "req-404"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "annotation": "FRAUDULENT"
+          }
+        },
+        "error": {
+          "code": "not-found",
+          "status": 404,
+          "requestId": "req-404"
+        }
+      }
+    },
+    {
+      "name": "annotate: 429 with Retry-After 7",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "annotation": "FRAUDULENT"
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "7"
+        },
+        "body": {
+          "error": {
+            "code": "rate-limited",
+            "message": "m",
+            "requestId": "req-429"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "annotation": "FRAUDULENT"
+          }
+        },
+        "error": {
+          "code": "rate-limited",
+          "status": 429,
+          "requestId": "req-429",
+          "retryAfterSeconds": 7
+        }
+      }
+    },
+    {
+      "name": "annotate: a timeout",
+      "call": "annotate",
+      "args": {
+        "aid": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD",
+        "input": {
+          "annotation": "FRAUDULENT"
+        },
+        "timeoutMs": 50
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {},
+        "delayMs": 400
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-cD:annotate",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "annotation": "FRAUDULENT"
+          }
+        },
+        "error": {
+          "code": "network-error",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "eraseAccount: an account id",
+      "call": "eraseAccount",
+      "args": {
+        "input": {
+          "accountId": "user-42"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/accounts:erase",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "accountId": "user-42"
+          }
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "eraseAccount: a hashed account id",
+      "call": "eraseAccount",
+      "args": {
+        "input": {
+          "hashedAccountId": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc="
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/accounts:erase",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "hashedAccountId": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc="
+          }
+        },
+        "result": null
+      }
+    },
+    {
+      "name": "eraseAccount: both forms is an argument error",
+      "call": "eraseAccount",
+      "args": {
+        "input": {
+          "accountId": "a",
+          "hashedAccountId": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc="
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "eraseAccount: neither form is an argument error",
+      "call": "eraseAccount",
+      "args": {
+        "input": {}
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "eraseAccount: an empty account id is an argument error",
+      "call": "eraseAccount",
+      "args": {
+        "input": {
+          "accountId": ""
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "eraseAccount: a hashed id that is not 32 bytes is an argument error",
+      "call": "eraseAccount",
+      "args": {
+        "input": {
+          "hashedAccountId": "AAAA"
+        }
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "inputError": true
+      }
+    },
+    {
+      "name": "eraseAccount: 404 not-found",
+      "call": "eraseAccount",
+      "args": {
+        "input": {
+          "accountId": "user-42"
+        }
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": "not-found",
+            "message": "m",
+            "requestId": "req-404"
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/accounts:erase",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "accountId": "user-42"
+          }
+        },
+        "error": {
+          "code": "not-found",
+          "status": 404,
+          "requestId": "req-404"
+        }
+      }
+    },
+    {
+      "name": "eraseAccount: a 200 that is not JSON is invalid-response",
+      "call": "eraseAccount",
+      "args": {
+        "input": {
+          "accountId": "user-42"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/plain; charset=utf-8"
+        },
+        "body": "done"
+      },
+      "expected": {
+        "request": {
+          "method": "POST",
+          "path": "/v1/accounts:erase",
+          "contentType": "application/json",
+          "auth": "bearer",
+          "json": {
+            "accountId": "user-42"
+          }
+        },
+        "error": {
+          "code": "invalid-response",
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "cardFields: a 6 digit BIN and four digits",
+      "call": "cardFields",
+      "args": {
+        "bin": "424242",
+        "last4": "4242"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "result": {
+          "cardBin": "424242",
+          "cardLastFour": "4242"
+        }
+      }
+    },
+    {
+      "name": "cardFields: an 8 digit BIN",
+      "call": "cardFields",
+      "args": {
+        "bin": "42424242"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "result": {
+          "cardBin": "42424242"
+        }
+      }
+    },
+    {
+      "name": "cardFields: four digits alone",
+      "call": "cardFields",
+      "args": {
+        "last4": "4242"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "result": {
+          "cardLastFour": "4242"
+        }
+      }
+    },
+    {
+      "name": "cardFields: nothing",
+      "call": "cardFields",
+      "args": {},
+      "response": null,
+      "expected": {
+        "request": null,
+        "result": {}
+      }
+    },
+    {
+      "name": "cardFields: 16 digits as the BIN are refused",
+      "call": "cardFields",
+      "args": {
+        "bin": "4242424242424242"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "cardFields: 16 digits as last4 are refused",
+      "call": "cardFields",
+      "args": {
+        "last4": "4242424242424242"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "cardFields: a 7 digit BIN is refused",
+      "call": "cardFields",
+      "args": {
+        "bin": "4242424"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "cardFields: a 5 digit BIN is refused",
+      "call": "cardFields",
+      "args": {
+        "bin": "42424"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "cardFields: a BIN with a space is refused",
+      "call": "cardFields",
+      "args": {
+        "bin": "4242 4"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "cardFields: three digits are refused",
+      "call": "cardFields",
+      "args": {
+        "last4": "424"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "cardFields: five digits are refused",
+      "call": "cardFields",
+      "args": {
+        "last4": "42424"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    },
+    {
+      "name": "cardFields: Arabic-Indic digits are refused",
+      "call": "cardFields",
+      "args": {
+        "last4": "٤٢٤٢"
+      },
+      "response": null,
+      "expected": {
+        "request": null,
+        "error": {
+          "code": "bad-request",
+          "status": 0
+        }
+      }
+    }
+  ]
+}

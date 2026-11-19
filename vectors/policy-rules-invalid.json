@@ -1,0 +1,4823 @@
+{
+  "suite": "policy-rules-invalid",
+  "protocolVersion": 1,
+  "description": "Rule lists a site may (valid) or may not (invalid) save. Asserted by the protocol package tests (validateRules) and by the database policy tests (private.policy_rules_error). Regenerate with pnpm --filter @revokegpt/protocol vectors:policy-rules.",
+  "siteHosts": [
+    "example.com",
+    "*.example.org"
+  ],
+  "lists": [
+    {
+      "name": "101 rules",
+      "code": "too-many-rules",
+      "rules": [
+        {
+          "id": "R0000000",
+          "name": "rule R0000000",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000001",
+          "name": "rule R0000001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000002",
+          "name": "rule R0000002",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000003",
+          "name": "rule R0000003",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000004",
+          "name": "rule R0000004",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000005",
+          "name": "rule R0000005",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000006",
+          "name": "rule R0000006",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000007",
+          "name": "rule R0000007",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000008",
+          "name": "rule R0000008",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000009",
+          "name": "rule R0000009",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000010",
+          "name": "rule R0000010",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000011",
+          "name": "rule R0000011",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000012",
+          "name": "rule R0000012",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000013",
+          "name": "rule R0000013",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000014",
+          "name": "rule R0000014",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000015",
+          "name": "rule R0000015",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000016",
+          "name": "rule R0000016",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000017",
+          "name": "rule R0000017",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000018",
+          "name": "rule R0000018",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000019",
+          "name": "rule R0000019",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000020",
+          "name": "rule R0000020",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000021",
+          "name": "rule R0000021",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000022",
+          "name": "rule R0000022",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000023",
+          "name": "rule R0000023",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000024",
+          "name": "rule R0000024",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000025",
+          "name": "rule R0000025",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000026",
+          "name": "rule R0000026",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000027",
+          "name": "rule R0000027",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000028",
+          "name": "rule R0000028",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000029",
+          "name": "rule R0000029",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000030",
+          "name": "rule R0000030",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000031",
+          "name": "rule R0000031",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000032",
+          "name": "rule R0000032",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000033",
+          "name": "rule R0000033",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000034",
+          "name": "rule R0000034",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000035",
+          "name": "rule R0000035",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000036",
+          "name": "rule R0000036",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000037",
+          "name": "rule R0000037",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000038",
+          "name": "rule R0000038",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000039",
+          "name": "rule R0000039",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000040",
+          "name": "rule R0000040",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000041",
+          "name": "rule R0000041",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000042",
+          "name": "rule R0000042",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000043",
+          "name": "rule R0000043",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000044",
+          "name": "rule R0000044",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000045",
+          "name": "rule R0000045",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000046",
+          "name": "rule R0000046",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000047",
+          "name": "rule R0000047",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000048",
+          "name": "rule R0000048",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000049",
+          "name": "rule R0000049",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000050",
+          "name": "rule R0000050",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000051",
+          "name": "rule R0000051",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000052",
+          "name": "rule R0000052",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000053",
+          "name": "rule R0000053",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000054",
+          "name": "rule R0000054",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000055",
+          "name": "rule R0000055",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000056",
+          "name": "rule R0000056",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000057",
+          "name": "rule R0000057",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000058",
+          "name": "rule R0000058",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000059",
+          "name": "rule R0000059",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000060",
+          "name": "rule R0000060",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000061",
+          "name": "rule R0000061",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000062",
+          "name": "rule R0000062",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000063",
+          "name": "rule R0000063",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000064",
+          "name": "rule R0000064",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000065",
+          "name": "rule R0000065",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000066",
+          "name": "rule R0000066",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000067",
+          "name": "rule R0000067",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000068",
+          "name": "rule R0000068",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000069",
+          "name": "rule R0000069",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000070",
+          "name": "rule R0000070",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000071",
+          "name": "rule R0000071",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000072",
+          "name": "rule R0000072",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000073",
+          "name": "rule R0000073",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000074",
+          "name": "rule R0000074",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000075",
+          "name": "rule R0000075",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000076",
+          "name": "rule R0000076",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000077",
+          "name": "rule R0000077",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000078",
+          "name": "rule R0000078",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000079",
+          "name": "rule R0000079",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000080",
+          "name": "rule R0000080",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000081",
+          "name": "rule R0000081",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000082",
+          "name": "rule R0000082",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000083",
+          "name": "rule R0000083",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000084",
+          "name": "rule R0000084",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000085",
+          "name": "rule R0000085",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000086",
+          "name": "rule R0000086",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000087",
+          "name": "rule R0000087",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000088",
+          "name": "rule R0000088",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000089",
+          "name": "rule R0000089",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000090",
+          "name": "rule R0000090",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000091",
+          "name": "rule R0000091",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000092",
+          "name": "rule R0000092",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000093",
+          "name": "rule R0000093",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000094",
+          "name": "rule R0000094",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000095",
+          "name": "rule R0000095",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000096",
+          "name": "rule R0000096",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000097",
+          "name": "rule R0000097",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000098",
+          "name": "rule R0000098",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000099",
+          "name": "rule R0000099",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "R0000100",
+          "name": "rule R0000100",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "not a list of rules",
+      "code": "schema",
+      "rules": [
+        {
+          "not": "a rule"
+        }
+      ]
+    },
+    {
+      "name": "an extra key",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block",
+          "extra": 1
+        }
+      ]
+    },
+    {
+      "name": "a missing key",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "an id of the wrong length",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "short",
+          "name": "rule short",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an id with a symbol",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad_0001",
+          "name": "rule Bad_0001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a 65 character name",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an empty name",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a bidi control in the name",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "a‮b",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a control character in the name",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "a\u0001b",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "enabled is not a boolean",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": "yes",
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "onError is not allow or block",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "maybe"
+        }
+      ]
+    },
+    {
+      "name": "no actions",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "9 actions",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "scoreHeader"
+            },
+            {
+              "type": "scoreHeader"
+            },
+            {
+              "type": "scoreHeader"
+            },
+            {
+              "type": "scoreHeader"
+            },
+            {
+              "type": "scoreHeader"
+            },
+            {
+              "type": "scoreHeader"
+            },
+            {
+              "type": "scoreHeader"
+            },
+            {
+              "type": "scoreHeader"
+            },
+            {
+              "type": "scoreHeader"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "two terminal actions",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "allow"
+            },
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an unknown action",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "tarpit"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an extra key on an action",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "allow",
+              "status": 200
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "block with status 500",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 500
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "block without a status",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "threshold 0.05",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "requireToken",
+              "action": "a",
+              "threshold": 0.05
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "threshold 1.1",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "requireToken",
+              "action": "a",
+              "threshold": 1.1
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "threshold 0.35",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "requireToken",
+              "action": "a",
+              "threshold": 0.35
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "action name with a space",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "requireToken",
+              "action": "a b",
+              "threshold": 0.5
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "challenge level 3",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "challengePage",
+              "minLevel": 3
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "redirect status 301",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "location": "/x",
+              "status": 301
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "redirect without a location",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "status": 302
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a redirect to an unregistered host",
+      "code": "redirect-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "location": "https://evil.example.net/",
+              "status": 302
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a redirect to the apex of a wildcard site host",
+      "code": "redirect-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "location": "https://example.org/",
+              "status": 302
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a protocol-relative redirect",
+      "code": "redirect-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "location": "//evil.example.net/",
+              "status": 302
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an http redirect",
+      "code": "redirect-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "location": "http://example.com/",
+              "status": 302
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a redirect with CRLF",
+      "code": "redirect-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "location": "/x\r\nSet-Cookie: a=b",
+              "status": 302
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a redirect with a backslash",
+      "code": "redirect-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "location": "/\\evil.example.net",
+              "status": 302
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name host",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "host",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name x-rg-score",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x-rg-score",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name x-rg",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x-rg",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name x-forwarded-for",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x-forwarded-for",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name forwarded",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "forwarded",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name content-length",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "content-length",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name transfer-encoding",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "transfer-encoding",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name set-cookie",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "set-cookie",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name cookie",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "cookie",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name authorization",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "authorization",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name connection",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "connection",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name upgrade",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "upgrade",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader on the denied name te",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "te",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader with an upper case name",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "X-Env",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader with an underscore name",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x_env",
+              "value": "x"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader with CR and LF in the value",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x-a",
+              "value": "a\r\nb: c"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader with LF in the value",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x-a",
+              "value": "a\nb"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader with a tab in the value",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x-a",
+              "value": "a\tb"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader with a non-ASCII value",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x-a",
+              "value": "café"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "setHeader with a 257 character value",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "setHeader",
+              "name": "x-a",
+              "value": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a 201 character path",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a regex-looking path",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a?b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a regex-looking path with a backslash",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a\\d+",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with a semicolon",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a;b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with a fragment",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a#b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path without a leading slash",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "admin",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an empty path",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with an empty segment",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a//b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with a dot segment",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a/../b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with an escaped dot segment",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a/%2e%2E/b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with an escaped slash",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a%2Fb",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with a lower case escaped slash",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a%2fb",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with an escaped backslash",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a%5Cb",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with an escaped semicolon",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a%3Bb",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with an escaped star",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a%2Ab",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with an escaped control character",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a%00b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with a malformed escape",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a%zzb",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with a raw control character",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a\u0001b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a path with ** inside a segment",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/a/**b",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "nine wildcards",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/*/*/*/*/*/*/*/*/*",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "no methods",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/x",
+            "methods": []
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "nine methods",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "OPTIONS",
+              "HEAD",
+              "A",
+              "B"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a lower case method",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/x",
+            "methods": [
+              "get"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a repeated method",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET",
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "* with another method",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/x",
+            "methods": [
+              "*",
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "no hosts",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [],
+            "path": "/x",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "17 hosts",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "h0.example.org",
+              "h1.example.org",
+              "h2.example.org",
+              "h3.example.org",
+              "h4.example.org",
+              "h5.example.org",
+              "h6.example.org",
+              "h7.example.org",
+              "h8.example.org",
+              "h9.example.org",
+              "h10.example.org",
+              "h11.example.org",
+              "h12.example.org",
+              "h13.example.org",
+              "h14.example.org",
+              "h15.example.org",
+              "h16.example.org"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an upper case host",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "Example.com"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an apex wildcard host",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "*.com"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a host with a port",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com:8080"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a host the site does not have",
+      "code": "host-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "www.example.com"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a wildcard host broader than the site pattern",
+      "code": "host-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "*.example.com"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a mix of covered and uncovered hosts",
+      "code": "host-not-allowed",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com",
+              "other.example.net"
+            ],
+            "path": "/x",
+            "methods": [
+              "GET"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an unknown key in when",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block",
+          "when": {
+            "geo": "us"
+          }
+        }
+      ]
+    },
+    {
+      "name": "when.noSession false",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block",
+          "when": {
+            "noSession": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "when.scoreBelow 0.05",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block",
+          "when": {
+            "scoreBelow": 0.05
+          }
+        }
+      ]
+    },
+    {
+      "name": "when.sessionLevelBelow 3",
+      "code": "schema",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block",
+          "when": {
+            "sessionLevelBelow": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "a repeated rule id",
+      "code": "duplicate-id",
+      "rules": [
+        {
+          "id": "Dup00001",
+          "name": "rule Dup00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        },
+        {
+          "id": "Dup00001",
+          "name": "rule Dup00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/admin/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a rule blocking /__rg/return",
+      "code": "blocks-rg-path",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/__rg/return",
+            "methods": [
+              "POST"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a rule blocking /__rg/session for every method",
+      "code": "blocks-rg-path",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/__rg/session",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a challenge page rule on /__rg/**",
+      "code": "blocks-rg-path",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/__rg/**",
+            "methods": [
+              "POST"
+            ]
+          },
+          "actions": [
+            {
+              "type": "challengePage",
+              "minLevel": 1
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a token rule on /**",
+      "code": "blocks-rg-path",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/**",
+            "methods": [
+              "*"
+            ]
+          },
+          "actions": [
+            {
+              "type": "requireToken",
+              "action": "a",
+              "threshold": 0.5
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a redirect rule on /__rg/*",
+      "code": "blocks-rg-path",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/__rg/*",
+            "methods": [
+              "POST"
+            ]
+          },
+          "actions": [
+            {
+              "type": "redirect",
+              "location": "/x",
+              "status": 302
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "an escaped spelling of /__rg/return",
+      "code": "blocks-rg-path",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/%5F%5Frg/%72eturn",
+            "methods": [
+              "POST"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block"
+        }
+      ]
+    },
+    {
+      "name": "a block with a when clause is still a block",
+      "code": "blocks-rg-path",
+      "rules": [
+        {
+          "id": "Bad00001",
+          "name": "rule Bad00001",
+          "enabled": true,
+          "match": {
+            "hosts": [
+              "example.com"
+            ],
+            "path": "/__rg/return",
+            "methods": [
+              "POST"
+            ]
+          },
+          "actions": [
+            {
+              "type": "block",
+              "status": 403
+            }
+          ],
+          "onError": "block",
+          "when": {
+            "scoreBelow": 0.5
+          }
+        }
+      ]
+    }
+  ]
+}

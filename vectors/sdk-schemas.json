@@ -1,0 +1,5438 @@
+{
+  "suite": "sdk-schemas",
+  "protocolVersion": 1,
+  "description": "Server SDK input and response validation (M11). Each case is { name, input: { schema, value }, expected: { valid } }; `valid` is computed by the zod schema of that name in packages/protocol (UserInfo with the SDK rule that it names an account or carries userIds, AccountVerificationRequest, AnnotateRequest, EraseRequest, AssessmentResponse) or by the helper (remoteip: canonicalizeIp(x) !== null, siteKey: isSiteKey, aid: ^(assessments/)?[A-Za-z0-9_-]{42}$ matched against the whole string, a trailing newline is not part of it). A request schema is a SDK input check: an invalid value is an argument error and no request is sent; a valid one is sent as given. A response schema is judged on a 200 body: valid is a result, invalid is the error code invalid-response; unknown fields of a looseObject are kept. An empty AnnotateRequest is valid here: the SDK adds no check, and the edge answers bad-request. An empty-string remoteip or sitekey is not a case: the SDKs treat it as not given and send nothing (sdk-http.json). TransactionData is not in this file: SDKs read transaction-data.json directly. Regenerate with `pnpm --filter @revokegpt/protocol vectors:sdk-schemas`.",
+  "cases": [
+    {
+      "name": "UserInfo: accountId only",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "user-1"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: empty object (the SDK rule: an account or userIds is needed)",
+      "input": {
+        "schema": "UserInfo",
+        "value": {}
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime alone",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "createAccountTime": "2026-11-08T10:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId 256 bytes (ASCII)",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: accountId 257 bytes (ASCII)",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId 256 bytes, two-byte characters at the edge",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: accountId 257 bytes, two-byte characters at the edge",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "ééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééa"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId 256 bytes, three-byte characters at the edge",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€a"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: accountId 257 bytes, three-byte characters at the edge",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€é"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId 256 bytes, four-byte characters",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: accountId 257 bytes, four-byte characters",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀a"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId 130 two-byte characters (260 bytes, 130 code units)",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId empty",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": ""
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId not a string",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": 7
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId null",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId padded 32-byte hash",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId unpadded",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId non-canonical trailing bits",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId 31 bytes",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId base64url alphabet",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId with a trailing newline",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\n"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: both accountId and hashedAccountId",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "extra": true
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime Z",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime offset",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:00+05:30"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime fractional seconds",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:00.123456Z"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime lowercase t and z",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08t10:00:00z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime no zone",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:00"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime date only",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime space separator",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08 10:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime leap day in a leap year",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2024-02-29T00:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime leap day in a common year",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-02-29T00:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime hour 24",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T24:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime second 60",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:60Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime dot without digits",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:00.Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime trailing newline",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:00Z\n"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime not a string",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": 1790000000
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userIds without an account",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "phoneNumber": "+15551234567"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: userIds with an account",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "userIds": [
+            {
+              "email": "a@b.co"
+            },
+            {
+              "username": "al"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: userIds empty array",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "userIds": []
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: userIds 10 entries",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "username": "u0"
+            },
+            {
+              "username": "u1"
+            },
+            {
+              "username": "u2"
+            },
+            {
+              "username": "u3"
+            },
+            {
+              "username": "u4"
+            },
+            {
+              "username": "u5"
+            },
+            {
+              "username": "u6"
+            },
+            {
+              "username": "u7"
+            },
+            {
+              "username": "u8"
+            },
+            {
+              "username": "u9"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: userIds 11 entries",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "username": "u0"
+            },
+            {
+              "username": "u1"
+            },
+            {
+              "username": "u2"
+            },
+            {
+              "username": "u3"
+            },
+            {
+              "username": "u4"
+            },
+            {
+              "username": "u5"
+            },
+            {
+              "username": "u6"
+            },
+            {
+              "username": "u7"
+            },
+            {
+              "username": "u8"
+            },
+            {
+              "username": "u9"
+            },
+            {
+              "username": "u10"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId with two fields",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "email": "a@b.co",
+              "username": "x"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId with no field",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {}
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId unknown key",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "email": "a@b.co",
+              "extra": 1
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId email 320 chars",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "email": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: userId email 321 chars",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "email": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId phoneNumber 32 chars",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "phoneNumber": "+1111111111111111111111111111111"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: userId phoneNumber 33 chars",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "phoneNumber": "+11111111111111111111111111111111"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId username 256 chars",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "username": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: userId username 257 chars",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "username": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId empty string",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "email": ""
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userIds not an array",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": {
+            "email": "a@b.co"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: one email endpoint",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: two endpoints",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            },
+            {
+              "phoneNumber": "+15551234567"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: three endpoints",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            },
+            {
+              "emailAddress": "c@d.co"
+            },
+            {
+              "emailAddress": "e@f.co"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: no endpoints",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": []
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: endpoints missing",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {}
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: endpoint with both fields",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co",
+              "phoneNumber": "+15551234567"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: endpoint unknown key",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co",
+              "extra": 1
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: malformed email",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "not an email"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: phone without plus",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "phoneNumber": "15551234567"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: phone 15 digits",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "phoneNumber": "+123456789012345"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: phone 16 digits",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "phoneNumber": "+1234567890123456"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode en",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "en"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode en-US",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "en-US"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode with underscore",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "en_US"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode 30 chars, the longest the shape allows",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "abc-12345678-12345678-12345678"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode 31 chars, shaped like the longest plus one",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "abc-12345678-12345678-123456789"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode four groups",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "en-aa-bb-cc-dd"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: unknown key",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "extra": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: deprecated username key",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "username": "x"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: empty body (the edge answers bad-request; the SDK sends it)",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {}
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: LEGITIMATE",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "LEGITIMATE"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: FRAUDULENT",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "FRAUDULENT"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: annotation unknown value",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "SPAM"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: annotation lowercase",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "legitimate"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: PAYMENT_FRAUD alias",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": [
+            "PAYMENT_FRAUD"
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: every reason, 14 entries",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": [
+            "CHARGEBACK",
+            "CHARGEBACK_FRAUD",
+            "CHARGEBACK_DISPUTE",
+            "REFUND",
+            "REFUND_FRAUD",
+            "TRANSACTION_ACCEPTED",
+            "TRANSACTION_DECLINED",
+            "PAYMENT_HEURISTICS",
+            "INITIATED_TWO_FACTOR",
+            "PASSED_TWO_FACTOR",
+            "FAILED_TWO_FACTOR",
+            "CORRECT_PASSWORD",
+            "INCORRECT_PASSWORD",
+            "SOCIAL_SPAM"
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: 15 reasons",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": [
+            "CHARGEBACK",
+            "CHARGEBACK_FRAUD",
+            "CHARGEBACK_DISPUTE",
+            "REFUND",
+            "REFUND_FRAUD",
+            "TRANSACTION_ACCEPTED",
+            "TRANSACTION_DECLINED",
+            "PAYMENT_HEURISTICS",
+            "INITIATED_TWO_FACTOR",
+            "PASSED_TWO_FACTOR",
+            "FAILED_TWO_FACTOR",
+            "CORRECT_PASSWORD",
+            "INCORRECT_PASSWORD",
+            "SOCIAL_SPAM",
+            "PAYMENT_FRAUD"
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: unknown reason",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": [
+            "NOT_A_REASON"
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: reasons empty",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": []
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: reasons not an array",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": "CHARGEBACK"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: accountId",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "LEGITIMATE",
+          "reasons": [
+            "CORRECT_PASSWORD"
+          ],
+          "accountId": "user-1"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: hashedAccountId",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": [
+            "PASSED_TWO_FACTOR"
+          ],
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: both accountId and hashedAccountId",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "accountId": "a",
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: accountId 257 bytes",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "accountId": "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€é"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: hashedAccountId unpadded",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: unknown key",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "LEGITIMATE",
+          "extra": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent minimal",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "MERCHANT_APPROVE"
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent full",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "PAYMENT_CAPTURE_DECLINE",
+            "reason": "do_not_honor",
+            "value": 12.5,
+            "eventTime": "2026-11-08T10:00:00Z"
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent with PAYMENT_FRAUD",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": [
+            "PAYMENT_FRAUD"
+          ],
+          "transactionEvent": {
+            "eventType": "CHARGEBACK"
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent unknown eventType",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "REFUNDED"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent missing eventType",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "reason": "x"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent reason 64 chars",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "reason": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent reason 65 chars",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "reason": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent negative value",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "value": -1
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent value 1e12",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "value": 1000000000000
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent value above 1e12",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "value": 1000000000001
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent bad eventTime",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "eventTime": "yesterday"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent unknown key",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "extra": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: accountId",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "user-1"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "EraseRequest: hashedAccountId",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "EraseRequest: neither",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {}
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: both",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "a",
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: accountId 256 bytes, two-byte characters",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "EraseRequest: accountId 257 bytes, two-byte characters",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "ééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééa"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: accountId empty",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": ""
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: hashedAccountId unpadded",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: hashedAccountId 31 bytes",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: unknown key",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "a",
+          "extra": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: minimal",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: unknown top-level field kept",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "futureField": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: unknown nested fields kept",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": [],
+            "extra": 1
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example",
+            "extra": 1
+          },
+          "event": {
+            "express": false,
+            "extra": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: full token properties",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": false,
+            "invalidReason": "EXPIRED",
+            "createTime": "2026-11-08T10:00:00.5+01:00",
+            "hostname": "shop.example",
+            "androidPackageName": "com.example.app",
+            "iosBundleId": "com.example.app",
+            "action": "login",
+            "cdata": "abc"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: express",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.5,
+            "reasons": [
+              "LOW_CONFIDENCE_SCORE"
+            ]
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": true,
+            "expectedAction": "login"
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: challenge PASSED",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.5,
+            "reasons": [],
+            "challenge": "PASSED"
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: challenge not PASSED",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.5,
+            "reasons": [],
+            "challenge": "FAILED"
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: score 0",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: score 1",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 1,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: score above 1",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 1.1,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: score negative",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": -0.1,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: score a string",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": "0.5",
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: score true",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": true,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: reasons with an unknown code",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": [
+              "MYSTERY"
+            ]
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: reasons with a known code",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": [
+              "AUTOMATION",
+              "PLAN_RESTRICTED"
+            ]
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: name without the prefix",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: name with 41 characters",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: name with 43 characters",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: name with a trailing newline",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: riskAnalysis missing",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: tokenProperties missing",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: event missing",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: event.express a string",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": "false"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: tokenProperties.valid missing",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "createTime": "2026-11-08T10:00:00Z"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: tokenProperties.valid 1",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": 1,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: invalidReason unknown",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example",
+            "invalidReason": "WHY"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: createTime a number",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": 1,
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: cdata with a space",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example",
+            "cdata": "a b"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: body is an array",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": [
+          {
+            "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "riskAnalysis": {
+              "score": 0.9,
+              "reasons": []
+            },
+            "tokenProperties": {
+              "valid": true,
+              "createTime": "2026-11-08T10:00:00Z",
+              "hostname": "shop.example"
+            },
+            "event": {
+              "express": false
+            }
+          }
+        ]
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: body is null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": null
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: body is a string",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": "ok"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: accountDefenderAssessment with unknown label",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "accountDefenderAssessment": {
+            "labels": [
+              "PROFILE_MATCH",
+              "SOMETHING_NEW"
+            ],
+            "extra": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: accountDefenderAssessment labels missing",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "accountDefenderAssessment": {}
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: requiresMfa not a boolean",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "requiresMfa": "yes"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: fraudPreventionAssessment",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0.1,
+            "riskReasons": [
+              {
+                "reason": "NEW_UNKNOWN_REASON",
+                "extra": 1
+              }
+            ],
+            "cardTestingVerdict": {
+              "risk": 0.05
+            },
+            "stolenInstrumentVerdict": {
+              "risk": 0.05,
+              "extra": 1
+            },
+            "cardTestingRisk": 0.05,
+            "stolenInstrumentRisk": 0.05,
+            "unscored": true,
+            "future": "kept"
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: fraudPreventionAssessment risk above 1",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 1.5,
+            "riskReasons": [],
+            "cardTestingVerdict": {
+              "risk": 0.05
+            },
+            "stolenInstrumentVerdict": {
+              "risk": 0.05
+            },
+            "cardTestingRisk": 0.05,
+            "stolenInstrumentRisk": 0.05
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: fraudPreventionAssessment missing a verdict",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0.1,
+            "riskReasons": [],
+            "cardTestingVerdict": {
+              "risk": 0.05
+            },
+            "cardTestingRisk": 0.05,
+            "stolenInstrumentRisk": 0.05
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: fraudPreventionAssessment unscored false",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0.1,
+            "riskReasons": [],
+            "cardTestingVerdict": {
+              "risk": 0.05
+            },
+            "stolenInstrumentVerdict": {
+              "risk": 0.05
+            },
+            "cardTestingRisk": 0.05,
+            "stolenInstrumentRisk": 0.05,
+            "unscored": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: fraudPreventionAssessment risk reason in lowercase",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0.1,
+            "riskReasons": [
+              {
+                "reason": "lower"
+              }
+            ],
+            "cardTestingVerdict": {
+              "risk": 0.05
+            },
+            "stolenInstrumentVerdict": {
+              "risk": 0.05
+            },
+            "cardTestingRisk": 0.05,
+            "stolenInstrumentRisk": 0.05
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: phoneFraudAssessment",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": 0.2,
+              "reasons": [
+                "VOIP_NUMBER",
+                "FUTURE_REASON"
+              ],
+              "unscored": true,
+              "extra": 1
+            },
+            "future": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: phoneFraudAssessment without a verdict",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "phoneFraudAssessment": {}
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: phoneFraudAssessment reasons not an array",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": 0.2,
+              "reasons": "VOIP_NUMBER"
+            }
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: phoneFraudAssessment risk negative",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": -0.2,
+              "reasons": []
+            }
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: accountVerification response",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "accountVerification": {
+            "endpoints": [
+              {
+                "requestToken": "tok_aaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "lastVerificationTime": "2026-11-08T10:00:00Z"
+              }
+            ],
+            "latestVerificationResult": "RESULT_UNSPECIFIED"
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: accountVerification response with a bad result",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "accountVerification": {
+            "endpoints": [],
+            "latestVerificationResult": "MAYBE"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0.2.1"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv4 leading zero in an octet",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0.2.01"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4 leading zeros everywhere",
+      "input": {
+        "schema": "remoteip",
+        "value": "010.000.002.001"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4 octet 256",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0.2.256"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4 three octets",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0.2"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4 hexadecimal",
+      "input": {
+        "schema": "remoteip",
+        "value": "0xc0.0.2.1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4 decimal integer",
+      "input": {
+        "schema": "remoteip",
+        "value": "3221225985"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4 with a port",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0.2.1:80"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4 with whitespace",
+      "input": {
+        "schema": "remoteip",
+        "value": " 192.0.2.1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4 with a trailing newline",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0.2.1\n"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001:db8::1"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv6 uppercase",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001:DB8::1"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv6 full form",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001:0db8:0000:0000:0000:0000:0000:0001"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv6 loopback",
+      "input": {
+        "schema": "remoteip",
+        "value": "::1"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv6 unspecified",
+      "input": {
+        "schema": "remoteip",
+        "value": "::"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv6 double compression",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001::db8::1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 zone id",
+      "input": {
+        "schema": "remoteip",
+        "value": "fe80::1%eth0"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 numeric zone id",
+      "input": {
+        "schema": "remoteip",
+        "value": "fe80::1%1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 empty zone id",
+      "input": {
+        "schema": "remoteip",
+        "value": "fe80::1%"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 in brackets",
+      "input": {
+        "schema": "remoteip",
+        "value": "[2001:db8::1]"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4-mapped IPv6",
+      "input": {
+        "schema": "remoteip",
+        "value": "::ffff:192.0.2.1"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv4-mapped IPv6 in hex",
+      "input": {
+        "schema": "remoteip",
+        "value": "::ffff:c000:201"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv4-mapped IPv6 with a leading zero",
+      "input": {
+        "schema": "remoteip",
+        "value": "::ffff:192.0.2.01"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4-compatible IPv6",
+      "input": {
+        "schema": "remoteip",
+        "value": "::192.0.2.1"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "remoteip: IPv6 group of five digits",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001:db8::12345"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 nine groups",
+      "input": {
+        "schema": "remoteip",
+        "value": "1:2:3:4:5:6:7:8:9"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: not an address",
+      "input": {
+        "schema": "remoteip",
+        "value": "example.com"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: 45 characters",
+      "input": {
+        "schema": "remoteip",
+        "value": "::ffff:1111111111111111111111111111111111111"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: a number",
+      "input": {
+        "schema": "remoteip",
+        "value": 3221225985
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: null",
+      "input": {
+        "schema": "remoteip",
+        "value": null
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: valid",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf8Tw"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "siteKey: 19 characters after the prefix",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf8T"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: 21 characters after the prefix",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf8Twa"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: secret key prefix",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgsk_7Hq2LmZ9xK4aRb3Nf8Tw"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: uppercase prefix",
+      "input": {
+        "schema": "siteKey",
+        "value": "RGPK_7Hq2LmZ9xK4aRb3Nf8Tw"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: underscore in the body",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4a_b3Nf8Tw"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: trailing newline",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf8Tw\n"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: leading space",
+      "input": {
+        "schema": "siteKey",
+        "value": " rgpk_7Hq2LmZ9xK4aRb3Nf8Tw"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: a number",
+      "input": {
+        "schema": "siteKey",
+        "value": 1
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: bare 42 characters",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "aid: with the assessments/ prefix",
+      "input": {
+        "schema": "aid",
+        "value": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "aid: 41 characters",
+      "input": {
+        "schema": "aid",
+        "value": "B3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: 43 characters",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xya"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix and 41 characters",
+      "input": {
+        "schema": "aid",
+        "value": "assessments/B3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix and 43 characters",
+      "input": {
+        "schema": "aid",
+        "value": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xya"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix twice",
+      "input": {
+        "schema": "aid",
+        "value": "assessments/assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix with a capital",
+      "input": {
+        "schema": "aid",
+        "value": "Assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix without the slash",
+      "input": {
+        "schema": "aid",
+        "value": "assessmentsaB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: padded base64",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-x="
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: standard alphabet plus",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-x+"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: standard alphabet slash",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-x/"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: trailing newline",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy\n"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix and a trailing newline",
+      "input": {
+        "schema": "aid",
+        "value": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy\n"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: leading space",
+      "input": {
+        "schema": "aid",
+        "value": " aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: empty string",
+      "input": {
+        "schema": "aid",
+        "value": ""
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: only the prefix",
+      "input": {
+        "schema": "aid",
+        "value": "assessments/"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: a name with :annotate",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy:annotate"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime Arabic-Indic year",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "٢٠٢٦-11-08T10:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime fullwidth year",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "２０２６-11-08T10:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime Arabic-Indic seconds",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:٠٠Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime fullwidth T",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08Ｔ10:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime zero-width space",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:00​Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime NUL at the end",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": "2026-11-08T10:00:00Z\u0000"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: createAccountTime null",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTime": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: accountId with NUL (valid: any bytes up to 256)",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a\u0000b"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: accountId with zero-width space (3 bytes)",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a​b"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId with a non-ASCII letter",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAé="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId with an Arabic-Indic digit",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "٠AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId with a fullwidth equals sign",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA＝"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId with NUL",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\u0000"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId with a zero-width space",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAA​AAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: hashedAccountId null",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "hashedAccountId": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userIds null",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "userIds": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId email null",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "email": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: userId email with NUL (shape-only fields accept any characters)",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "email": "a\u0000b"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "UserInfo: userId username in Arabic-Indic digits",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "userIds": [
+            {
+              "username": "٢٠٢٦"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: phone with Arabic-Indic digits",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "phoneNumber": "+١٥٥٥١٢٣٤٥٦٧"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: phone with fullwidth digits",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "phoneNumber": "+１５５５１２３４５６７"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: phone with NUL",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "phoneNumber": "+15551234567\u0000"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: phone with a zero-width space",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "phoneNumber": "+1555​1234567"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: phone with a trailing newline",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "phoneNumber": "+15551234567\n"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: email with a non-ASCII local part",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "é@b.co"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: email with NUL",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a\u0000@b.co"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: email with a trailing newline",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co\n"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode with fullwidth letters",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "ｅｎ"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode with a non-ASCII letter",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "én"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode with Arabic-Indic digits",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "en-٢٠"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode with a trailing newline",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": "en\n"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: languageCode null",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "languageCode": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: endpoints null",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: annotation null",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: reasons null",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent null",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent value null",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "value": null
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent reason null",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "reason": null
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent eventTime null",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "eventTime": null
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent eventTime Arabic-Indic digits",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "eventTime": "٢٠٢٦-11-08T10:00:00Z"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent eventTime fullwidth digits",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "eventTime": "２０２６-11-08T10:00:00Z"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent eventTime NUL",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "eventTime": "2026-11-08T10:00:00Z\u0000"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: transactionEvent value 1.0 (the same number as 1)",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvent": {
+            "eventType": "AUTHORIZATION",
+            "value": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AnnotateRequest: reason with a zero-width space",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": [
+            "CHARGEBACK​"
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: reason in fullwidth letters",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "reasons": [
+            "ＣＨＡＲＧＥＢＡＣＫ"
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: annotation with a Turkish dotted capital I",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "LEGİTIMATE"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: hashedAccountId with a non-ASCII letter",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAé="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: hashedAccountId with a non-ASCII letter",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAé="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: hashedAccountId with an Arabic-Indic digit",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "hashedAccountId": "٠AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: hashedAccountId with NUL",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "hashedAccountId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\u0000"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: accountId with NUL",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "\u0000"
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "EraseRequest: accountId null",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: hashedAccountId null",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "hashedAccountId": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown keys: several",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "foo": 1,
+          "bar": null,
+          "baz": []
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key: a typo of accountId",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountID": "a"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key: a typo of createAccountTime",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "createAccountTIme": "2026-11-08T10:00:00Z"
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key: __proto__ as an own key",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "__proto__": {
+            "x": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key: __proto__ alone with a valid account",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "__proto__": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key: constructor",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "constructor": {
+            "name": "x"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key: toString",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "toString": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key: non-ASCII",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "ключ": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "UserInfo: unknown key: empty name",
+      "input": {
+        "schema": "UserInfo",
+        "value": {
+          "accountId": "a",
+          "": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: unknown keys: several",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "foo": 1,
+          "bar": 2
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: unknown key: __proto__ as an own key",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "__proto__": {
+            "x": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: unknown key: constructor",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "constructor": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: unknown key: non-ASCII",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co"
+            }
+          ],
+          "ключ": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AccountVerificationRequest: unknown key inside an endpoint: __proto__",
+      "input": {
+        "schema": "AccountVerificationRequest",
+        "value": {
+          "endpoints": [
+            {
+              "emailAddress": "a@b.co",
+              "__proto__": 1
+            }
+          ]
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: unknown keys: several",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "LEGITIMATE",
+          "foo": 1,
+          "bar": 2
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: unknown key: a typo of transactionEvent",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "transactionEvnt": {
+            "eventType": "AUTHORIZATION"
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: unknown key: __proto__ as an own key",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "LEGITIMATE",
+          "__proto__": {
+            "x": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: unknown key: constructor",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "LEGITIMATE",
+          "constructor": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AnnotateRequest: unknown key: non-ASCII",
+      "input": {
+        "schema": "AnnotateRequest",
+        "value": {
+          "annotation": "LEGITIMATE",
+          "ключ": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: unknown keys: several",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "a",
+          "foo": 1,
+          "bar": 2
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: unknown key: __proto__ as an own key",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "a",
+          "__proto__": {
+            "x": 1
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: unknown key: constructor",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "a",
+          "constructor": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "EraseRequest: unknown key: non-ASCII",
+      "input": {
+        "schema": "EraseRequest",
+        "value": {
+          "accountId": "a",
+          "ключ": 1
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: riskAnalysis.score null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": null,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: riskAnalysis.score 1 + epsilon",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 1.0000000000000002,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: riskAnalysis.score 0.5000000000000001",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.5000000000000001,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: tokenProperties.valid null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": null,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: name null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": null,
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: reasons null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": null
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: hostname null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": null
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: event.express null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": null
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: requiresMfa null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "requiresMfa": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: fraudPreventionAssessment null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: phoneFraudAssessment null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "phoneFraudAssessment": null
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: name with a non-ASCII letter",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAé",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: name with Arabic-Indic digits",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA٠٠٠٠",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: name with NUL",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\u0000",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: name with a zero-width space",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA​",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: createTime with Arabic-Indic digits",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "٢٠٢٦-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: createTime with fullwidth digits",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "２０２６-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: createTime with NUL",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z\u0000",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "name": "AssessmentResponse: cdata with a non-ASCII letter",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example",
+            "cdata": "é"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: cdata with Arabic-Indic digits",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example",
+            "cdata": "٢٠٢٦"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: cdata with a zero-width space",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example",
+            "cdata": "a​b"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: cdata with NUL",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example",
+            "cdata": "a\u0000"
+          },
+          "event": {
+            "express": false
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: fraud riskReason with a non-ASCII letter",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "fraudPreventionAssessment": {
+            "transactionRisk": 0.1,
+            "riskReasons": [
+              {
+                "reason": "É"
+              }
+            ],
+            "cardTestingVerdict": {
+              "risk": 0.05
+            },
+            "stolenInstrumentVerdict": {
+              "risk": 0.05
+            },
+            "cardTestingRisk": 0.05,
+            "stolenInstrumentRisk": 0.05
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: phone verdict reason with NUL",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": 0.2,
+              "reasons": [
+                "VOIP\u0000"
+              ]
+            }
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "AssessmentResponse: phone verdict risk null",
+      "input": {
+        "schema": "AssessmentResponse",
+        "value": {
+          "name": "assessments/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "riskAnalysis": {
+            "score": 0.9,
+            "reasons": []
+          },
+          "tokenProperties": {
+            "valid": true,
+            "createTime": "2026-11-08T10:00:00Z",
+            "hostname": "shop.example"
+          },
+          "event": {
+            "express": false
+          },
+          "phoneFraudAssessment": {
+            "smsTollFraudVerdict": {
+              "risk": null,
+              "reasons": []
+            }
+          }
+        }
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: Arabic-Indic octet",
+      "input": {
+        "schema": "remoteip",
+        "value": "١٩٢.0.2.1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: fullwidth digits",
+      "input": {
+        "schema": "remoteip",
+        "value": "１９２.０.２.１"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: fullwidth full stops",
+      "input": {
+        "schema": "remoteip",
+        "value": "192。0。2。1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: ideographic full stop",
+      "input": {
+        "schema": "remoteip",
+        "value": "192．0.2.1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: NUL at the end",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0.2.1\u0000"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: NUL in the middle",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0\u0000.2.1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: zero-width space",
+      "input": {
+        "schema": "remoteip",
+        "value": "192.0.​2.1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 with fullwidth digits",
+      "input": {
+        "schema": "remoteip",
+        "value": "２００１:db8::1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 with an Arabic-Indic digit",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001:db8::٠"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 with a non-ASCII letter",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001:dé8::1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 with NUL",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001:db8::1\u0000"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv6 with a zero-width space",
+      "input": {
+        "schema": "remoteip",
+        "value": "2001:db8::​1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "remoteip: IPv4-mapped with Arabic-Indic digits",
+      "input": {
+        "schema": "remoteip",
+        "value": "::ffff:١٩٢.0.2.1"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: Arabic-Indic digit in the body",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf8T٠"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: non-ASCII letter in the body",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf8é"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: fullwidth letter in the body",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf8Ｔ"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: Kelvin sign in the body",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3NfKw"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: Kelvin sign in the prefix",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgK_7Hq2LmZ9xK4aRb3Nf8Tw"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: fullwidth prefix",
+      "input": {
+        "schema": "siteKey",
+        "value": "ｒｇｐｋ_7Hq2LmZ9xK4aRb3Nf8Tw"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: NUL at the end",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf8Tw\u0000"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: NUL in the body",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf\u0000w"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: zero-width space in the body",
+      "input": {
+        "schema": "siteKey",
+        "value": "rgpk_7Hq2LmZ9xK4aRb3Nf​w"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "siteKey: null",
+      "input": {
+        "schema": "siteKey",
+        "value": null
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: non-ASCII letter",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xé"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: Arabic-Indic digit",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-x٠"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: fullwidth digit",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-x０"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: Kelvin sign",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xK"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: NUL at the end",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy\u0000"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: NUL replacing the last character",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-x\u0000"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: zero-width space replacing the last character",
+      "input": {
+        "schema": "aid",
+        "value": "aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-x​"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix with a non-ASCII letter",
+      "input": {
+        "schema": "aid",
+        "value": "assessmentś/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix with a zero-width space",
+      "input": {
+        "schema": "aid",
+        "value": "assessments​/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xy"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: prefix and a non-ASCII letter",
+      "input": {
+        "schema": "aid",
+        "value": "assessments/aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-aB3_-xé"
+      },
+      "expected": {
+        "valid": false
+      }
+    },
+    {
+      "name": "aid: null",
+      "input": {
+        "schema": "aid",
+        "value": null
+      },
+      "expected": {
+        "valid": false
+      }
+    }
+  ]
+}

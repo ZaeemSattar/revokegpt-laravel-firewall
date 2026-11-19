@@ -1,0 +1,44 @@
+{
+    "name": "revokegpt/firewall-laravel",
+    "description": "Laravel middleware that enforces a RevokeGPT signed policy bundle (protocol v1, section 18).",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-sodium": "*",
+        "revokegpt/revokegpt": "0.1.0",
+        "illuminate/cache": "^11.0 || ^12.0",
+        "illuminate/contracts": "^11.0 || ^12.0",
+        "illuminate/http": "^11.0 || ^12.0",
+        "illuminate/support": "^11.0 || ^12.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "RevokeGPT\\Firewall\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RevokeGPT\\Firewall\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "RevokeGPT\\Firewall\\RevokeGPTServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,110 @@
+# Tags `v*`: validates the Laravel firewall, runs the tests and tells Packagist to fetch the new tag. The GitHub webhook of the
+# Packagist package is the primary path (Packagist has no upload); the update call here is only the fallback, with the
+# credentials of the environment `release`. Nothing is called from a manual run unless it is started from a tag with
+# dry-run set to false.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Run everything except the final upload (a real release needs a tag on the default branch)
+        required: true
+        type: boolean
+        default: true
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      dry-run: ${{ steps.gate.outputs.dry_run }}
+      version: ${{ steps.gate.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - name: Gate
+        id: gate
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          INPUT_DRY_RUN: ${{ inputs.dry-run }}
+          TAG_RE: '^v[0-9]+[.][0-9]+[.][0-9]+$'
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "push" ]; then dry=false; else dry="$INPUT_DRY_RUN"; fi
+          case "$dry" in true|false) ;; *) echo "::error::bad dry-run value"; exit 1 ;; esac
+          if [ "$dry" = "false" ]; then
+            # A real release: an annotated tag of this repository whose commit is on the default branch.
+            [ "$REF_TYPE" = "tag" ] || { echo "::error::a real release runs from a tag"; exit 1; }
+            printf '%s' "$REF_NAME" | grep -Eq "$TAG_RE" || { echo "::error::the tag does not match $TAG_RE"; exit 1; }
+            [ "$(git cat-file -t "refs/tags/$REF_NAME")" = "tag" ] || { echo "::error::the tag is not annotated"; exit 1; }
+            sha="$(git rev-parse --verify "refs/tags/$REF_NAME^{commit}")"
+            # The jobs after this one build and publish the commit of the event, not whatever the tag says later.
+            [ "$sha" = "$GITHUB_SHA" ] || { echo "::error::the tag no longer points at the commit this run was started for"; exit 1; }
+            git rev-parse --verify --quiet "refs/remotes/origin/$DEFAULT_BRANCH" >/dev/null || { echo "::error::no default branch"; exit 1; }
+            git merge-base --is-ancestor "$sha" "origin/$DEFAULT_BRANCH" || { echo "::error::the tagged commit is not on the default branch"; exit 1; }
+          fi
+          version="$(sed -n 's/^## \([0-9][0-9.]*\).*$/\1/p' CHANGELOG.md | head -n 1)"
+          if [ -z "$version" ]; then echo "::error::no version in CHANGELOG.md"; exit 1; fi
+          if [ "$dry" = "false" ] && [ "${REF_NAME#v}" != "$version" ]; then
+            echo "::error::the tag version is not the newest CHANGELOG.md version"; exit 1
+          fi
+          if [ "$dry" = "false" ]; then
+            sdk="$(sed -n 's/^.*"revokegpt\/revokegpt": "\([0-9][0-9.]*\)".*$/\1/p' composer.json | head -n 1)"
+            if [ -z "$sdk" ]; then echo "::error::composer.json does not pin revokegpt/revokegpt to an exact version"; exit 1; fi
+            curl --fail --silent --show-error --output /dev/null "https://repo.packagist.org/p2/revokegpt/revokegpt.json" || { echo "::error::the SDK is not on Packagist"; exit 1; }
+            curl --fail --silent --show-error "https://repo.packagist.org/p2/revokegpt/revokegpt.json" | jq -e --arg v "$sdk" '[.packages["revokegpt/revokegpt"][] | select((.version | ltrimstr("v")) == $v)] | length > 0' > /dev/null || { echo "::error::revokegpt/revokegpt $sdk is not on Packagist yet; release the SDK first"; exit 1; }
+          fi
+          { echo "dry_run=$dry"; echo "version=$version"; } >> "$GITHUB_OUTPUT"
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: curl, json, mbstring, sodium, intl
+          tools: composer:v2
+          coverage: none
+      - name: Validate
+        run: composer validate --strict
+      - name: Install
+        run: composer install --no-interaction --no-progress
+      - name: Tests (the dry run stops here)
+        run: vendor/bin/phpunit
+
+  publish:
+    needs: verify
+    if: needs.verify.outputs.dry-run == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - name: Tell Packagist (fallback to the GitHub webhook)
+        shell: bash
+        env:
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_API_TOKEN: ${{ secrets.PACKAGIST_API_TOKEN }}
+          PACKAGE_REPO: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          body="$(printf '{"repository":{"url":"%s"}}' "$PACKAGE_REPO")"
+          curl --fail --silent --show-error --max-time 60 -X POST -H 'Content-Type: application/json' \
+            --config <(printf 'url = "https://packagist.org/api/update-package?username=%s&apiToken=%s"\n' "$PACKAGIST_USERNAME" "$PACKAGIST_API_TOKEN") \
+            -d "$body" > /dev/null

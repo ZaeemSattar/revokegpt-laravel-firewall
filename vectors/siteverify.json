@@ -1,0 +1,152 @@
+{
+  "suite": "siteverify",
+  "protocolVersion": 1,
+  "description": "Raw siteverify response body (input.body, the response text) -> the fields a server SDK must expose. verified is true only when the body is JSON, is an object, every known field has its documented type and range, and success is exactly the boolean true; anything else (non-JSON, a missing success, success as a string, number or array, a known field of the wrong type, null included (a non-string hostname, action or challenge_ts, a challenge_ts that is not an RFC 3339 date-time, error-codes or reasons that are not arrays of strings, a null score), a score outside [0, 1], a body that starts with a byte-order mark (U+FEFF), which is never stripped) is not verified, with score/action/hostname null and errorCodes/reasons []. For a well-formed body, absent score/action/hostname are null and absent error-codes/reasons are []. apkPackageName and iosBundleId (from apk_package_name and ios_bundle_id) are always present in expected: the string when a well-formed body carries it, otherwise null (a result never omits them, so an inherited value can never be read through it). Unknown fields are ignored and unknown reason or error-code strings are preserved verbatim.",
+  "cases": [
+    {
+      "name": "success with score, action and hostname",
+      "input": { "body": "{\"success\":true,\"challenge_ts\":\"2026-11-01T12:00:00Z\",\"hostname\":\"example.com\",\"score\":0.9,\"action\":\"login\",\"mode\":\"score\",\"reasons\":[]}" },
+      "expected": { "verified": true, "score": 0.9, "action": "login", "hostname": "example.com", "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "success with reasons",
+      "input": { "body": "{\"success\":true,\"hostname\":\"example.com\",\"score\":0.3,\"action\":\"signup\",\"reasons\":[\"AUTOMATION\",\"DATACENTER_IP\"]}" },
+      "expected": { "verified": true, "score": 0.3, "action": "signup", "hostname": "example.com", "errorCodes": [], "reasons": ["AUTOMATION", "DATACENTER_IP"], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "failure with one error code",
+      "input": { "body": "{\"success\":false,\"error-codes\":[\"timeout-or-duplicate\"]}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": ["timeout-or-duplicate"], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "failure with several error codes",
+      "input": { "body": "{\"success\":false,\"error-codes\":[\"invalid-input-secret\",\"bad-request\"]}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": ["invalid-input-secret", "bad-request"], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "unknown future reason is preserved",
+      "input": { "body": "{\"success\":true,\"score\":0.5,\"reasons\":[\"AUTOMATION\",\"SOME_FUTURE_REASON\"]}" },
+      "expected": { "verified": true, "score": 0.5, "action": null, "hostname": null, "errorCodes": [], "reasons": ["AUTOMATION", "SOME_FUTURE_REASON"], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "unknown future error code is preserved",
+      "input": { "body": "{\"success\":false,\"error-codes\":[\"some-future-error\"]}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": ["some-future-error"], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "unknown extra fields are ignored",
+      "input": { "body": "{\"success\":true,\"score\":1,\"hostname\":\"example.com\",\"future_field\":{\"a\":1},\"another\":[1,2]}" },
+      "expected": { "verified": true, "score": 1, "action": null, "hostname": "example.com", "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "minimal success",
+      "input": { "body": "{\"success\":true}" },
+      "expected": { "verified": true, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "score 0 is exposed, not null",
+      "input": { "body": "{\"success\":true,\"score\":0,\"action\":\"checkout\"}" },
+      "expected": { "verified": true, "score": 0, "action": "checkout", "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: success is the string \"false\"",
+      "input": { "body": "{\"success\":\"false\"}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: success is the string \"true\"",
+      "input": { "body": "{\"success\":\"true\"}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: success is 1",
+      "input": { "body": "{\"success\":1}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: success is [false]",
+      "input": { "body": "{\"success\":[false]}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: success is null",
+      "input": { "body": "{\"success\":null}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: score out of range",
+      "input": { "body": "{\"success\":true,\"score\":7}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: score is a string",
+      "input": { "body": "{\"success\":true,\"score\":\"0.9\"}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: missing success",
+      "input": { "body": "{\"score\":0.9,\"action\":\"login\",\"hostname\":\"example.com\"}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: not JSON (HTML error page)",
+      "input": { "body": "<html><body>502 Bad Gateway</body></html>" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: empty body",
+      "input": { "body": "" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: a byte-order mark (U+FEFF) before a passing body (never stripped)",
+      "input": { "body": "\ufeff{\"success\":true,\"challenge_ts\":\"2026-11-01T12:00:00Z\",\"hostname\":\"example.com\",\"action\":\"login\"}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: JSON array",
+      "input": { "body": "[{\"success\":true}]" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: hostname is an array ([\"victim.com\"] == \"victim.com\" in loose comparisons)",
+      "input": { "body": "{\"success\":true,\"hostname\":[\"victim.com\"]}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: hostname is null",
+      "input": { "body": "{\"success\":true,\"hostname\":null}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: action is a number",
+      "input": { "body": "{\"success\":true,\"action\":7}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: error-codes is a string",
+      "input": { "body": "{\"success\":true,\"error-codes\":\"x\"}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: reasons holds a number",
+      "input": { "body": "{\"success\":true,\"reasons\":[1]}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: challenge_ts is not a date-time",
+      "input": { "body": "{\"success\":true,\"challenge_ts\":\"yesterday\"}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "malformed: score is null",
+      "input": { "body": "{\"success\":true,\"score\":null}" },
+      "expected": { "verified": false, "score": null, "action": null, "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": null, "iosBundleId": null }
+    },
+    {
+      "name": "well-formed: app identifiers (apkPackageName and iosBundleId are the strings sent)",
+      "input": { "body": "{\"success\":true,\"score\":0.9,\"action\":\"login\",\"apk_package_name\":\"com.example.app\",\"ios_bundle_id\":\"com.example.ios\"}" },
+      "expected": { "verified": true, "score": 0.9, "action": "login", "hostname": null, "errorCodes": [], "reasons": [], "apkPackageName": "com.example.app", "iosBundleId": "com.example.ios" }
+    }
+  ]
+}

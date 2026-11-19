@@ -1,0 +1,412 @@
+{
+  "suite": "transaction-data",
+  "protocolVersion": 1,
+  "description": "Valid and invalid transactionData bodies (protocol v1 section 20), the value of event.transactionData. valid[] must parse; invalid[] must be refused by the schema. Card data is a gateway's published test card (BIN 424242). The exempt fields: user.creationMs (digits only) and an E.164 user.phoneNumber are not scanned for a card number; the Luhn-valid phone numbers are shaped to the +883 pattern of libphonenumber's metadata and are in no assigned allocation.",
+  "valid": [
+    {
+      "name": "full",
+      "input": {
+        "transactionData": {
+          "transactionId": "order-1001",
+          "paymentMethod": "credit-card",
+          "cardBin": "42424242",
+          "cardLastFour": "4242",
+          "currencyCode": "USD",
+          "value": 59.9,
+          "shippingValue": 4.5,
+          "shippingAddress": {
+            "recipient": "Ada Example",
+            "address": [
+              "1 Example Street"
+            ],
+            "locality": "London",
+            "administrativeArea": "England",
+            "regionCode": "GB",
+            "postalCode": "SW1A 1AA"
+          },
+          "billingAddress": {
+            "regionCode": "GB",
+            "postalCode": "SW1A 1AA"
+          },
+          "user": {
+            "accountId": "user-1",
+            "creationMs": "1760000000000",
+            "email": "ada@example.com",
+            "emailVerified": true,
+            "phoneNumber": "+447700900123",
+            "phoneVerified": false
+          },
+          "merchants": [
+            {
+              "accountId": "seller-1"
+            }
+          ],
+          "items": [
+            {
+              "name": "Widget",
+              "value": 29.95,
+              "quantity": 2,
+              "merchantAccountId": "seller-1"
+            }
+          ],
+          "gatewayInfo": {
+            "name": "adyen",
+            "gatewayResponseCode": "CVC Declined",
+            "avsResponseCode": "Y",
+            "cvvResponseCode": "N"
+          }
+        }
+      }
+    },
+    {
+      "name": "minimal (BIN6 only)",
+      "input": {
+        "transactionData": {
+          "cardBin": "424242",
+          "cardLastFour": "4242"
+        }
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "transactionData": {}
+      }
+    },
+    {
+      "name": "processor method",
+      "input": {
+        "transactionData": {
+          "paymentMethod": "processor-paypal",
+          "value": 0
+        }
+      }
+    },
+    {
+      "name": "Luhn-valid 13-digit creationMs",
+      "input": {
+        "transactionData": {
+          "user": {
+            "creationMs": "1760000000008"
+          }
+        }
+      }
+    },
+    {
+      "name": "Luhn-valid 13-digit E.164 phoneNumber",
+      "input": {
+        "transactionData": {
+          "user": {
+            "phoneNumber": "+8835100123455"
+          }
+        }
+      }
+    },
+    {
+      "name": "Luhn-valid 15-digit E.164 phoneNumber",
+      "input": {
+        "transactionData": {
+          "user": {
+            "phoneNumber": "+883510012345005"
+          }
+        }
+      }
+    },
+    {
+      "name": "Luhn-valid creationMs and E.164 of a merchant",
+      "input": {
+        "transactionData": {
+          "merchants": [
+            {
+              "creationMs": "1760000000008",
+              "phoneNumber": "+8835100123455"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "13-digit creationMs at the cap",
+      "input": {
+        "transactionData": {
+          "user": {
+            "creationMs": "9999999999999"
+          }
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "7 digit BIN",
+      "input": {
+        "transactionData": {
+          "cardBin": "4242424"
+        }
+      }
+    },
+    {
+      "name": "16 digit BIN",
+      "input": {
+        "transactionData": {
+          "cardBin": "4242424242424242"
+        }
+      }
+    },
+    {
+      "name": "5 digit last four",
+      "input": {
+        "transactionData": {
+          "cardLastFour": "42424"
+        }
+      }
+    },
+    {
+      "name": "cvv key",
+      "input": {
+        "transactionData": {
+          "cvv": "123"
+        }
+      }
+    },
+    {
+      "name": "cardNumber key",
+      "input": {
+        "transactionData": {
+          "cardNumber": "4242424242424242"
+        }
+      }
+    },
+    {
+      "name": "expiry key",
+      "input": {
+        "transactionData": {
+          "expiry": "12/30"
+        }
+      }
+    },
+    {
+      "name": "PAN in item name",
+      "input": {
+        "transactionData": {
+          "items": [
+            {
+              "name": "4242 4242 4242 4242"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "PAN in a nested address line",
+      "input": {
+        "transactionData": {
+          "shippingAddress": {
+            "address": [
+              "ref 4242-4242-4242-4242"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "21 items",
+      "input": {
+        "transactionData": {
+          "items": [
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            },
+            {
+              "name": "x"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "6 merchants",
+      "input": {
+        "transactionData": {
+          "merchants": [
+            {},
+            {},
+            {},
+            {},
+            {},
+            {}
+          ]
+        }
+      }
+    },
+    {
+      "name": "lower-case region code",
+      "input": {
+        "transactionData": {
+          "shippingAddress": {
+            "regionCode": "gb"
+          }
+        }
+      }
+    },
+    {
+      "name": "negative value",
+      "input": {
+        "transactionData": {
+          "value": -1
+        }
+      }
+    },
+    {
+      "name": "NaN as a string",
+      "input": {
+        "transactionData": {
+          "value": "NaN"
+        }
+      }
+    },
+    {
+      "name": "value above 1e12",
+      "input": {
+        "transactionData": {
+          "value": 10000000000000
+        }
+      }
+    },
+    {
+      "name": "bad payment method",
+      "input": {
+        "transactionData": {
+          "paymentMethod": "cash"
+        }
+      }
+    },
+    {
+      "name": "bad currency",
+      "input": {
+        "transactionData": {
+          "currencyCode": "usd"
+        }
+      }
+    },
+    {
+      "name": "non-numeric creationMs",
+      "input": {
+        "transactionData": {
+          "user": {
+            "creationMs": "yesterday"
+          }
+        }
+      }
+    },
+    {
+      "name": "PAN in a phoneNumber that is not E.164",
+      "input": {
+        "transactionData": {
+          "user": {
+            "phoneNumber": "4242424242424242"
+          }
+        }
+      }
+    },
+    {
+      "name": "PAN in user.accountId",
+      "input": {
+        "transactionData": {
+          "user": {
+            "accountId": "4242424242424242"
+          }
+        }
+      }
+    },
+    {
+      "name": "PAN in a merchant accountId",
+      "input": {
+        "transactionData": {
+          "merchants": [
+            {
+              "accountId": "4242 4242 4242 4242"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "15-digit PAN as creationMs",
+      "input": {
+        "transactionData": {
+          "user": {
+            "creationMs": "378282246310005"
+          }
+        }
+      }
+    },
+    {
+      "name": "14-digit creationMs",
+      "input": {
+        "transactionData": {
+          "user": {
+            "creationMs": "17600000000000"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "suite": "sdk-conformance",
+  "protocolVersion": 1,
+  "description": "Which vector suites a server SDK must run. sdk-schemas.json and sdk-http.json (required) are added by the tasks that create them.",
+  "suites": [
+    {
+      "file": "account-hash.json",
+      "server": "edge-only",
+      "why": "account hashing uses an edge-only master key"
+    },
+    {
+      "file": "assessment-id.json",
+      "server": "edge-only",
+      "why": "assessment ids are minted and checked by the edge"
+    },
+    {
+      "file": "attest-binding.json",
+      "server": "edge-only",
+      "why": "attestation binding is built by the client and checked by the edge"
+    },
+    {
+      "file": "card-hash.json",
+      "server": "edge-only",
+      "why": "card hashing uses an edge-only pepper (M8)"
+    },
+    {
+      "file": "device-hash.json",
+      "server": "edge-only",
+      "why": "device hashing is edge-side"
+    },
+    {
+      "file": "fields.json",
+      "server": "required",
+      "why": "action and cdata validation"
+    },
+    {
+      "file": "gateway-codes.json",
+      "server": "edge-only",
+      "why": "gateway code normalisation is edge-side; used by the examples only"
+    },
+    {
+      "file": "hostnames.json",
+      "server": "required",
+      "why": "hostname canonicalisation and matching"
+    },
+    {
+      "file": "keys.json",
+      "server": "required",
+      "why": "key, secret and site-key parsing; the cases with pepperHex are edge-only and are skipped"
+    },
+    {
+      "file": "mobile-bridge.json",
+      "server": "edge-only",
+      "why": "mobile SDK vectors (protocol section 23); no server SDK runs them, see mobile-conformance.json"
+    },
+    {
+      "file": "mobile-client.json",
+      "server": "edge-only",
+      "why": "mobile SDK vectors (protocol section 23); no server SDK runs them, see mobile-conformance.json"
+    },
+    {
+      "file": "mobile-conformance.json",
+      "server": "edge-only",
+      "why": "mobile SDK vectors (protocol section 23); no server SDK runs them, see mobile-conformance.json"
+    },
+    {
+      "file": "otp.json",
+      "server": "edge-only",
+      "why": "OTP generation and MAC are edge-side"
+    },
+    {
+      "file": "pan-scan.json",
+      "server": "required",
+      "why": "PAN refusal in transactionData (M8)"
+    },
+    {
+      "file": "phone-hash.json",
+      "server": "edge-only",
+      "why": "phone hashing uses an edge-only pepper (M8)"
+    },
+    {
+      "file": "policy-rules-invalid.json",
+      "server": "firewall",
+      "why": "firewall rule validation (M9)"
+    },
+    {
+      "file": "policy-rules-valid.json",
+      "server": "firewall",
+      "why": "firewall rule validation (M9)"
+    },
+    {
+      "file": "policy.json",
+      "server": "firewall",
+      "why": "firewall policy suite (M9), run by the firewall integrations"
+    },
+    {
+      "file": "pow.json",
+      "server": "edge-only",
+      "why": "proof-of-work is verified by the edge; SDKs never solve or verify it"
+    },
+    {
+      "file": "puzzle.json",
+      "server": "edge-only",
+      "why": "puzzle schemas are edge and widget wire; a server SDK does not parse them"
+    },
+    {
+      "file": "reasons.json",
+      "server": "edge-only",
+      "why": "reason bitmask codec is edge-side; SDKs read the reason strings"
+    },
+    {
+      "file": "relying-party.json",
+      "server": "required",
+      "why": "relying-party checks on a siteverify result"
+    },
+    {
+      "file": "score.json",
+      "server": "edge-only",
+      "why": "score quantisation happens at the edge"
+    },
+    {
+      "file": "sdk-http.json",
+      "server": "required",
+      "why": "SDK request shape, response handling and error mapping, generated and proven against the Node SDK"
+    },
+    {
+      "file": "sdk-schemas.json",
+      "server": "required",
+      "why": "SDK input and response validation, generated from the zod schemas and proven against the Node SDK"
+    },
+    {
+      "file": "siteverify.json",
+      "server": "required",
+      "why": "siteverify response reader"
+    },
+    {
+      "file": "spend.json",
+      "server": "edge-only",
+      "why": "spend shard naming is an edge Durable Object detail"
+    },
+    {
+      "file": "transaction-data.json",
+      "server": "required",
+      "why": "the full TransactionData schema: valid bodies pass and invalid bodies are refused, with the field-aware PAN walker (M8)"
+    },
+    {
+      "file": "username-canon.json",
+      "server": "edge-only",
+      "why": "username canonicalization is used by the edge for account protection; server SDKs do not canonicalize"
+    }
+  ]
+}

@@ -1,0 +1,422 @@
+{
+  "suite": "relying-party",
+  "protocolVersion": 1,
+  "description": "Relying-party check (protocol v1 section 7, Relying-party verification): input.body is the raw siteverify response text and input.expect is { hostname, action?, minScore? } or { app: { platform, id }, action?, minScore? }; expected is checkSiteverifyResult(parseSiteverifyResult(body), expect): { ok: true }, or { ok: false, reason } with the first check that failed, in this order: invalid-expectation (both or neither of expect.hostname and expect.app; expect.app not an object whose platform is android or ios and whose id matches that platform's pattern; expect.hostname not already canonical, canonicalizeHostname(h) !== h; an action that is not a string, null included; minScore given and not a JSON number in [0, 1]: null, a boolean, a string, an array, a negative number or one above 1), not-verified (success is not exactly true, or the body does not parse, a body behind a byte-order mark included: the mark is never stripped), app-mismatch (for an app expectation: apk_package_name for android, ios_bundle_id for ios, compared exactly; an absent app id never matches, and the other platform's field never stands in), hostname-mismatch (exact string comparison: no case folding, suffix, www., port, scheme, leading- or trailing-dot, whitespace, percent-decoding, character-stripping or Unicode-normalization match), action-mismatch (equal actions, or both absent: an expectation without an action accepts only a token without one; compared exactly, with or without a score in the result: no prefix, trimming, case-folding, character-stripping or Unicode-normalization match), then score-missing (a threshold, 0 included, and no score), threshold-missing (a score, 0 included, and no threshold) and score-below-threshold (score >= minScore passes, compared exactly as given: no rounding of either, to the score grid or otherwise, and no tolerance).",
+  "cases": [
+    {
+      "name": "pass: hostname, action and a score above the threshold",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "pass: a score equal to the threshold (score >= minScore)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.5}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "pass: no action and no score, expected with neither",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\"}", "expect": { "hostname": "shop.example" } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "pass: threshold 0 and score 0",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"score\":0}", "expect": { "hostname": "shop.example", "minScore": 0 } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "pass: a subdomain expected exactly",
+      "input": { "body": "{\"success\":true,\"hostname\":\"a.shop.example\",\"action\":\"signup\",\"score\":0.7}", "expect": { "hostname": "a.shop.example", "action": "signup", "minScore": 0.7 } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "pass: a threshold between score steps, 0.45, and a score of 0.5",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.5}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.45 } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "action downgrade: a token minted for newsletter spent on login",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"newsletter\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.9 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "no-action relying party: a token that carries an action is refused",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "no-action relying party: an empty action in the result is still an action",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"\",\"score\":0.9}", "expect": { "hostname": "shop.example", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "an expected action and a token without one",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "the action is compared exactly (no case folding)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"Login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "an action that only starts with the expected one: login2 is not login",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login2\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "an action with a leading space: \" login\" is not login (no trimming)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\" login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "an action in fullwidth letters is not login (no Unicode normalization)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"\\uff4cogin\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "an action with a trailing space: \"login \" is not login (no trimming)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login \",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "an action with a trailing line feed is not login (no trimming)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\\n\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "an action with a zero-width space inside is not login (no character stripping)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"log\\u200bin\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "an action with a Kelvin sign is not Kiosk (no Unicode normalization, NFC included)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"\\u212aiosk\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "Kiosk", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "action downgrade without a score: a score-less newsletter token spent on login",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"newsletter\"}", "expect": { "hostname": "shop.example", "action": "login" } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "no-action relying party: a score-less token that carries an action is refused",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\"}", "expect": { "hostname": "shop.example" } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "a score-less token: LOGIN is not login (no case folding without a threshold either)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"LOGIN\"}", "expect": { "hostname": "shop.example", "action": "login" } },
+      "expected": { "ok": false, "reason": "action-mismatch" }
+    },
+    {
+      "name": "a threshold and no score in the result",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\"}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "score-missing" }
+    },
+    {
+      "name": "a threshold of 0 and no score in the result (0 is a threshold)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\"}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0 } },
+      "expected": { "ok": false, "reason": "score-missing" }
+    },
+    {
+      "name": "an M2 body (score, mode and reasons) and no threshold: every verified M2 result carries a score",
+      "input": { "body": "{\"success\":true,\"challenge_ts\":\"2026-11-05T12:00:00Z\",\"hostname\":\"shop.example\",\"score\":1,\"action\":\"login\",\"mode\":\"invisible\",\"reasons\":[]}", "expect": { "hostname": "shop.example", "action": "login" } },
+      "expected": { "ok": false, "reason": "threshold-missing" }
+    },
+    {
+      "name": "an M2 body scored as missing signals (0.2, AUTOMATION and LOW_CONFIDENCE_SCORE) against 0.5",
+      "input": { "body": "{\"success\":true,\"challenge_ts\":\"2026-11-05T12:00:00Z\",\"hostname\":\"shop.example\",\"score\":0.2,\"action\":\"login\",\"mode\":\"invisible\",\"reasons\":[\"AUTOMATION\",\"LOW_CONFIDENCE_SCORE\"]}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "pass: an M2 score-mode body at the privacy floor (0.7, ANONYMIZER and LOW_CONFIDENCE_SCORE) against 0.5",
+      "input": { "body": "{\"success\":true,\"challenge_ts\":\"2026-11-05T12:00:00Z\",\"hostname\":\"shop.example\",\"score\":0.7,\"action\":\"login\",\"mode\":\"score\",\"reasons\":[\"ANONYMIZER\",\"LOW_CONFIDENCE_SCORE\"]}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "a score in the result and no threshold",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login" } },
+      "expected": { "ok": false, "reason": "threshold-missing" }
+    },
+    {
+      "name": "a score of 0 in the result and no threshold",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0}", "expect": { "hostname": "shop.example", "action": "login" } },
+      "expected": { "ok": false, "reason": "threshold-missing" }
+    },
+    {
+      "name": "a score below the threshold",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.4}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "a score below a threshold between score steps: 0.5 against 0.55",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.5}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.55 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "a score below a threshold between score steps: 0.4 against 0.45",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.4}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.45 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "a score below a threshold close to it: 0.4 against 0.44 (never rounded to the score grid)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.4}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.44 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "a score below a threshold close to it: 0.4 against 0.41",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.4}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.41 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "a score off the score grid below the threshold: 0.45 against 0.5 (never rounded up)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.45}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "a score one ulp below the threshold: 0.3 against 0.30000000000000004 (no tolerance)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.3}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.30000000000000004 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "a score just below the threshold: 0.495 against 0.5 (the score is never rounded)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.495}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "score-below-threshold" }
+    },
+    {
+      "name": "hostname suffix: evilshop.example is not shop.example",
+      "input": { "body": "{\"success\":true,\"hostname\":\"evilshop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname subdomain: a.shop.example is not shop.example",
+      "input": { "body": "{\"success\":true,\"hostname\":\"a.shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname uppercase in the result: SHOP.example is not shop.example",
+      "input": { "body": "{\"success\":true,\"hostname\":\"SHOP.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname trailing dot in the result: shop.example. is not shop.example",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example.\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname www. prefix in the result: www.shop.example is not shop.example",
+      "input": { "body": "{\"success\":true,\"hostname\":\"www.shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname with a port in the result: shop.example:443 is not shop.example",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example:443\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname with a leading space in the result: \" shop.example\" is not shop.example (no trimming)",
+      "input": { "body": "{\"success\":true,\"hostname\":\" shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname in fullwidth letters in the result is not shop.example (no Unicode normalization)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"\\uff53hop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname with a trailing space in the result: \"shop.example \" is not shop.example (no trimming)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example \",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname with a trailing line feed in the result is not shop.example (no trimming)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\\n\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname with a leading dot in the result: .shop.example is not shop.example",
+      "input": { "body": "{\"success\":true,\"hostname\":\".shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname with a scheme in the result: https://shop.example is not shop.example",
+      "input": { "body": "{\"success\":true,\"hostname\":\"https://shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname percent-encoded in the result: shop%2Eexample is not shop.example (no decoding)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop%2Eexample\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "hostname with a zero-width space in the result is not shop.example (no character stripping)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop\\u200b.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "no hostname in the result",
+      "input": { "body": "{\"success\":true,\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "hostname-mismatch" }
+    },
+    {
+      "name": "non-canonical expectation: an uppercase hostname, even when the result carries the same text",
+      "input": { "body": "{\"success\":true,\"hostname\":\"Shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "Shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "non-canonical expectation: a trailing dot, even when the result carries the same text",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example.\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example.", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "non-canonical expectation: an empty hostname",
+      "input": { "body": "{\"success\":true,\"hostname\":\"\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: a threshold above 1",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 1.5 } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: a null threshold (null is not absent)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0}", "expect": { "hostname": "shop.example", "action": "login", "minScore": null } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: a null threshold and no score in the result",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\"}", "expect": { "hostname": "shop.example", "action": "login", "minScore": null } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: a boolean threshold",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0}", "expect": { "hostname": "shop.example", "action": "login", "minScore": false } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: a threshold given as a string",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": "0.5" } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: an array threshold",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0}", "expect": { "hostname": "shop.example", "action": "login", "minScore": [] } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: a negative threshold",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0}", "expect": { "hostname": "shop.example", "action": "login", "minScore": -0.1 } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: a threshold just above 1",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 1.1 } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: an action that is not a string",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": 7, "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: a null action (null is not absent), with a token without an action",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\"}", "expect": { "hostname": "shop.example", "action": null } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "verified false: a failure body that otherwise matches",
+      "input": { "body": "{\"success\":false,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9,\"error-codes\":[\"timeout-or-duplicate\"]}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "not-verified" }
+    },
+    {
+      "name": "verified false: success is the string \"true\"",
+      "input": { "body": "{\"success\":\"true\",\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "not-verified" }
+    },
+    {
+      "name": "verified false: the body is not JSON",
+      "input": { "body": "<html>502 Bad Gateway</html>", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "not-verified" }
+    },
+    {
+      "name": "verified false: a byte-order mark (U+FEFF) before a body that otherwise passes (never stripped)",
+      "input": { "body": "\ufeff{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "not-verified" }
+    },
+    {
+      "name": "pass: an android app expectation, apk_package_name equal, action and a score above the threshold",
+      "input": { "body": "{\"success\":true,\"apk_package_name\":\"com.example.app\",\"action\":\"login\",\"score\":0.9}", "expect": { "app": { "platform": "android", "id": "com.example.app" }, "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "pass: an ios app expectation, ios_bundle_id equal, no action and no score",
+      "input": { "body": "{\"success\":true,\"ios_bundle_id\":\"com.example.App-1\"}", "expect": { "app": { "platform": "ios", "id": "com.example.App-1" } } },
+      "expected": { "ok": true }
+    },
+    {
+      "name": "app-mismatch: an android expectation against a token that carries the id only as ios_bundle_id (the other platform's field never stands in)",
+      "input": { "body": "{\"success\":true,\"ios_bundle_id\":\"com.example.app\"}", "expect": {"app": {"platform": "android", "id": "com.example.app"}} },
+      "expected": {"ok": false, "reason": "app-mismatch"}
+    },
+    {
+      "name": "app-mismatch: an android expectation against a web token without apk_package_name (an absent app id never matches)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\"}", "expect": {"app": {"platform": "android", "id": "com.example.app"}} },
+      "expected": {"ok": false, "reason": "app-mismatch"}
+    },
+    {
+      "name": "app-mismatch: an ios expectation against a body that carries only apk_package_name (the other platform's field never stands in)",
+      "input": { "body": "{\"success\":true,\"apk_package_name\":\"com.example.app\"}", "expect": {"app": {"platform": "ios", "id": "com.example.app"}} },
+      "expected": {"ok": false, "reason": "app-mismatch"}
+    },
+    {
+      "name": "app-mismatch: a different apk_package_name",
+      "input": { "body": "{\"success\":true,\"apk_package_name\":\"com.example.other\"}", "expect": {"app": {"platform": "android", "id": "com.example.app"}} },
+      "expected": {"ok": false, "reason": "app-mismatch"}
+    },
+    {
+      "name": "app-mismatch: the app id is compared exactly (no case folding)",
+      "input": { "body": "{\"success\":true,\"ios_bundle_id\":\"com.Example.App\"}", "expect": {"app": {"platform": "ios", "id": "com.example.app"}} },
+      "expected": {"ok": false, "reason": "app-mismatch"}
+    },
+    {
+      "name": "invalid expectation: an app platform that is not android or ios (web)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\"}", "expect": {"app": {"platform": "web", "id": "shop.example"}} },
+      "expected": {"ok": false, "reason": "invalid-expectation"}
+    },
+    {
+      "name": "invalid expectation: a malformed android package name (a segment starting with a digit)",
+      "input": { "body": "{\"success\":true,\"apk_package_name\":\"com.1example.app\"}", "expect": {"app": {"platform": "android", "id": "com.1example.app"}} },
+      "expected": {"ok": false, "reason": "invalid-expectation"}
+    },
+    {
+      "name": "invalid expectation: a malformed ios bundle id (a single segment)",
+      "input": { "body": "{\"success\":true,\"ios_bundle_id\":\"example\"}", "expect": {"app": {"platform": "ios", "id": "example"}} },
+      "expected": {"ok": false, "reason": "invalid-expectation"}
+    },
+    {
+      "name": "invalid expectation: an over-long android package name (256 characters)",
+      "input": { "body": "{\"success\":true,\"apk_package_name\":\"a.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}", "expect": {"app": {"platform": "android", "id": "a.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}} },
+      "expected": {"ok": false, "reason": "invalid-expectation"}
+    },
+    {
+      "name": "invalid expectation: an over-long ios bundle id (156 characters)",
+      "input": { "body": "{\"success\":true,\"ios_bundle_id\":\"a.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}", "expect": {"app": {"platform": "ios", "id": "a.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}} },
+      "expected": {"ok": false, "reason": "invalid-expectation"}
+    },
+    {
+      "name": "invalid expectation: a null app (null is not absent)",
+      "input": { "body": "{\"success\":true,\"apk_package_name\":\"com.example.app\"}", "expect": {"app": null} },
+      "expected": {"ok": false, "reason": "invalid-expectation"}
+    },
+    {
+      "name": "invalid expectation: both hostname and app (exactly one is required)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"apk_package_name\":\"com.example.app\",\"action\":\"login\",\"score\":0.9}", "expect": { "hostname": "shop.example", "app": { "platform": "android", "id": "com.example.app" }, "action": "login", "minScore": 0.5 } },
+      "expected": { "ok": false, "reason": "invalid-expectation" }
+    },
+    {
+      "name": "invalid expectation: neither hostname nor app (exactly one is required)",
+      "input": { "body": "{\"success\":true,\"hostname\":\"shop.example\",\"action\":\"login\",\"score\":0.9}", "expect": {"action": "login", "minScore": 0.5} },
+      "expected": {"ok": false, "reason": "invalid-expectation"}
+    }
+  ]
+}

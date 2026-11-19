@@ -1,0 +1,151 @@
+{
+  "suite": "pan-scan",
+  "protocolVersion": 1,
+  "description": "containsPanRun known answers (protocol v1 section 20). Each run of digits with at most one space or dash between two digits is split on those separators into groups; true when any contiguous sequence of whole groups has 13 to 19 digits in total and passes the Luhn check (so a PAN next to a CVV, a year or a date is found). A single unseparated run of 20 or more digits is not flagged (order ids). 4242 4242 4242 4242 is a gateway's published test card.",
+  "cases": [
+    {
+      "name": "16 digits",
+      "input": {
+        "text": "4242424242424242"
+      },
+      "expected": {
+        "pan": true
+      }
+    },
+    {
+      "name": "spaced",
+      "input": {
+        "text": "4242 4242 4242 4242"
+      },
+      "expected": {
+        "pan": true
+      }
+    },
+    {
+      "name": "dashed",
+      "input": {
+        "text": "4242-4242-4242-4242"
+      },
+      "expected": {
+        "pan": true
+      }
+    },
+    {
+      "name": "embedded",
+      "input": {
+        "text": "order 4242424242424242 x"
+      },
+      "expected": {
+        "pan": true
+      }
+    },
+    {
+      "name": "15 digit Luhn run (Amex test card)",
+      "input": {
+        "text": "378282246310005"
+      },
+      "expected": {
+        "pan": true
+      }
+    },
+    {
+      "name": "16 digits failing Luhn",
+      "input": {
+        "text": "4242424242424241"
+      },
+      "expected": {
+        "pan": false
+      }
+    },
+    {
+      "name": "12 digits",
+      "input": {
+        "text": "424242424242"
+      },
+      "expected": {
+        "pan": false
+      }
+    },
+    {
+      "name": "double space splits the run",
+      "input": {
+        "text": "4242  4242 4242 4242"
+      },
+      "expected": {
+        "pan": false
+      }
+    },
+    {
+      "name": "phone number",
+      "input": {
+        "text": "+44 7700 900123"
+      },
+      "expected": {
+        "pan": false
+      }
+    },
+    {
+      "name": "ISO date",
+      "input": {
+        "text": "2026-11-14T10:20:30Z"
+      },
+      "expected": {
+        "pan": false
+      }
+    },
+    {
+      "name": "single unseparated 20 digit run is not flagged (order id)",
+      "input": {
+        "text": "42424242424242424242"
+      },
+      "expected": {
+        "pan": false
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "text": ""
+      },
+      "expected": {
+        "pan": false
+      }
+    },
+    {
+      "name": "PAN then a CVV-like group",
+      "input": {
+        "text": "4242424242424242 123"
+      },
+      "expected": {
+        "pan": true
+      }
+    },
+    {
+      "name": "PAN then a year",
+      "input": {
+        "text": "4242424242424242 2026"
+      },
+      "expected": {
+        "pan": true
+      }
+    },
+    {
+      "name": "date then PAN",
+      "input": {
+        "text": "2026-11-14 4242424242424242"
+      },
+      "expected": {
+        "pan": true
+      }
+    },
+    {
+      "name": "spaced PAN then a group",
+      "input": {
+        "text": "4242 4242 4242 4242 123"
+      },
+      "expected": {
+        "pan": true
+      }
+    }
+  ]
+}
